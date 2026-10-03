@@ -36,7 +36,8 @@
         "closable": false,
         "visible": false,
         "focus": false,
-        "focusable": false
+        "focusable": false,
+        "acceptFirstMouse": true
       }
     ],
     "security": {
