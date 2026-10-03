@@ -3,6 +3,7 @@ import { AppShell } from '@/components/AppShell';
 import { Placeholder } from '@/components/Placeholder';
 import { Dashboard } from '@/features/Dashboard';
 import { More } from '@/features/More';
+import { LayerDetail } from '@/features/layers/LayerDetail';
 
 export const routes: RouteObject[] = [
   {
@@ -10,10 +11,7 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: <Dashboard /> },
       { path: 'more', element: <More /> },
-      {
-        path: 'layers/:layerId',
-        element: <Placeholder title="Layer" note="Live preview, steps and log." />,
-      },
+      { path: 'layers/:layerId', element: <LayerDetail /> },
       {
         path: 'approvals',
         element: <Placeholder title="Approvals" note="Decisions waiting on you." />,
