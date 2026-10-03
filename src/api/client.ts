@@ -14,35 +14,24 @@ import {
   VapidKeySchema,
 } from './schemas';
 import type { LogFilter, NewTask, Profile, TaskPatch } from './types';
-import { getApiUrl } from './config';
+import { ApiError } from '@/transport/errors';
+import { getTransport as defaultTransport } from '@/transport';
+import type { Transport } from '@/transport/types';
 
-export class ApiError extends Error {
-  constructor(
-    message: string,
-    readonly status: number,
-  ) {
-    super(message);
-    this.name = 'ApiError';
-  }
-}
+export { ApiError };
 
-type Fetch = typeof fetch;
-
-export function createApiClient(baseUrl: () => string = getApiUrl, fetchImpl: Fetch = fetch) {
+export function createApiClient(getTransport: () => Transport = defaultTransport) {
   async function request<T>(
     schema: z.ZodType<T>,
     method: string,
     path: string,
     body?: unknown,
   ): Promise<T> {
-    const res = await fetchImpl(`${baseUrl()}${path}`, {
-      method,
-      headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
-      body: body === undefined ? undefined : JSON.stringify(body),
-    });
-    if (!res.ok) throw new ApiError(`${method} ${path} failed (${res.status})`, res.status);
-    const json: unknown = res.status === 204 ? null : await res.json();
-    const parsed = schema.safeParse(json);
+    const res = await getTransport().request(method, path, body);
+    if (res.status < 200 || res.status >= 300) {
+      throw new ApiError(`${method} ${path} failed (${res.status})`, res.status);
+    }
+    const parsed = schema.safeParse(res.json);
     if (!parsed.success) {
       throw new ApiError(`Unexpected response from ${method} ${path}`, res.status);
     }

@@ -12,7 +12,11 @@ import { QUESTIONS } from './chronotype';
 const api = vi.hoisted(() => ({ getProfile: vi.fn(), putProfile: vi.fn(), listLayers: vi.fn() }));
 vi.mock('@/api/client', () => ({
   api,
-  createApiClient: () => ({ listLayers: api.listLayers }),
+  createApiClient: (getTransport: () => { kind: string }) => {
+    // The real client takes a transport getter; fail loudly if given anything else.
+    if (typeof getTransport().kind !== 'string') throw new Error('expected a transport');
+    return { listLayers: api.listLayers };
+  },
 }));
 
 beforeEach(() => {
@@ -78,6 +82,22 @@ describe('Settings', () => {
     renderWithProviders(<SettingsPage />);
     expect(await screen.findByRole('alert')).toHaveTextContent(/could not reach the agent/i);
     expect(screen.getByLabelText('Backend URL')).toBeInTheDocument();
+  });
+
+  it('tests the typed backend URL through a direct transport', async () => {
+    api.getProfile.mockResolvedValue(defaultProfile());
+    api.listLayers.mockResolvedValue([]);
+    renderWithProviders(<SettingsPage />);
+    const url = await screen.findByLabelText('Backend URL');
+    await userEvent.clear(url);
+    await userEvent.type(url, 'https://agent.local:8787');
+    await userEvent.click(screen.getByRole('button', { name: 'Test' }));
+    await waitFor(() => expect(api.listLayers).toHaveBeenCalled());
+    await waitFor(() =>
+      expect(useToastStore.getState().toasts.map((t) => t.message)).toContain(
+        'Connected to the agent.',
+      ),
+    );
   });
 
   it('rejects an invalid backend URL', async () => {

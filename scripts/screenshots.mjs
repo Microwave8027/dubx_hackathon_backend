@@ -40,6 +40,11 @@ for (const [name, opts] of Object.entries(views)) {
   for (const [i, path] of targets.entries()) {
     await page.goto(base + path);
     await page.waitForTimeout(2500);
+    // CLICK="Button name" presses a button first (e.g. to reveal the pairing QR code).
+    if (process.env.CLICK) {
+      await page.getByRole('button', { name: process.env.CLICK }).click();
+      await page.waitForTimeout(800);
+    }
     const slug = path.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '') || 'home';
     await page.screenshot({
       path: `docs/screenshots/${prefix}-${name}-${slug}.png`,

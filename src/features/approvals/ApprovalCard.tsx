@@ -10,9 +10,11 @@ import { toast } from '@/state/toastStore';
 interface Props {
   approval: Approval;
   selected?: boolean;
+  /** Hides the context screenshot (used inline in the briefing). */
+  compact?: boolean;
 }
 
-export function ApprovalCard({ approval, selected = false }: Props) {
+export function ApprovalCard({ approval, selected = false, compact = false }: Props) {
   const taskText = useLiveStore((s) => s.tasks[approval.taskId]?.text);
   const [imageFailed, setImageFailed] = useState(false);
 
@@ -53,6 +55,7 @@ export function ApprovalCard({ approval, selected = false }: Props) {
       {approval.action.details && <p className="text-sm text-muted">{approval.action.details}</p>}
 
       {approval.screenshotUrl &&
+        !compact &&
         (imageFailed ? (
           <p className="rounded-lg bg-raised p-3 text-sm text-muted">Screenshot unavailable.</p>
         ) : (

@@ -1,7 +1,9 @@
 import { useEffect, useId, useState, type FormEvent } from 'react';
 import { createApiClient } from '@/api/client';
+import { createDirectTransport } from '@/transport/direct';
 import { getApiUrl, setApiUrlOverride } from '@/api/config';
-import { forgetPairedDevice, listPairedDevices, type PairedDevice } from '@/pairing/devices';
+import { listPairedDevices, type PairedDevice } from '@/pairing/devices';
+import { forgetPairing } from '@/pairing/pair';
 import { toast } from '@/state/toastStore';
 import { parseBackendUrl } from './backendUrl';
 import { Link } from 'react-router-dom';
@@ -22,7 +24,7 @@ function PairedDevices() {
 
   async function forget(id: string) {
     try {
-      await forgetPairedDevice(id);
+      await forgetPairing(id);
       setDevices((d) => d?.filter((x) => x.id !== id) ?? null);
     } catch {
       toast.error('Could not remove that device.');
@@ -86,7 +88,8 @@ export function ConnectionSection() {
     setTesting(true);
     try {
       const target = parsed || envUrl;
-      await createApiClient(() => target).listLayers();
+      const transport = createDirectTransport({ baseUrl: () => target });
+      await createApiClient(() => transport).listLayers();
       toast.info('Connected to the agent.');
     } catch {
       toast.error('Could not reach the agent at that address.');

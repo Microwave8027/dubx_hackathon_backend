@@ -3,6 +3,7 @@ import { useLayersQuery, useLogQuery } from '@/api/queries';
 import { StatusBadge } from '@/components/StatusBadge';
 import { layerTone, statusLabel } from '@/components/statusTone';
 import { useLiveStore } from '@/state/store';
+import { LogEntryRow } from '@/features/log/LogEntryRow';
 import { LayerControls } from './LayerControls';
 import { LayerPreview } from './LayerPreview';
 import { StepList } from './StepList';
@@ -25,14 +26,12 @@ function LayerLog({ layerId }: { layerId: string }) {
   if (!log.data?.length)
     return <p className="text-sm text-muted">Nothing logged for this layer yet.</p>;
   return (
-    <ul className="divide-y divide-line rounded-card border border-line bg-surface">
+    <ul
+      className="divide-y divide-line rounded-card border border-line bg-surface"
+      aria-label="Layer activity"
+    >
       {log.data.map((e) => (
-        <li key={e.id} className="flex items-start justify-between gap-3 p-3 text-sm">
-          <span className={e.undone ? 'text-muted line-through' : ''}>{e.summary}</span>
-          <time className="shrink-0 text-xs text-muted" dateTime={e.ts}>
-            {new Date(e.ts).toLocaleTimeString()}
-          </time>
-        </li>
+        <LogEntryRow key={e.id} entry={e} showLayer={false} />
       ))}
     </ul>
   );

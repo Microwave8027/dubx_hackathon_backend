@@ -1,11 +1,20 @@
 import { z } from 'zod';
 import { STORES, idbDelete, idbGetAll, idbPut } from '@/storage/idb';
 
+// Relay pairing material, base64. The secret key never leaves this device's IndexedDB.
+const RelayPairingSchema = z.object({
+  url: z.string(),
+  publicKey: z.string(),
+  secretKey: z.string(),
+  daemonPublicKey: z.string(),
+});
+
 export const PairedDeviceSchema = z.object({
   id: z.string(),
   name: z.string(),
   pairedAt: z.string(),
   apiUrl: z.string().optional(),
+  relay: RelayPairingSchema.optional(),
 });
 export type PairedDevice = z.infer<typeof PairedDeviceSchema>;
 

@@ -2,7 +2,7 @@ import { useEffect, type ReactNode } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLiveStore } from '@/state/store';
 import { api } from './client';
-import { getWsUrl } from './config';
+import { getTransport } from '@/transport';
 import { queryKeys } from './queries';
 import { notifyForEvent } from '@/notifications/notifyEvents';
 import { createWsClient } from './ws';
@@ -34,7 +34,7 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
     }
 
     const client = createWsClient({
-      url: () => getWsUrl(),
+      transport: getTransport,
       onEvent: (event) => {
         const previousTask =
           event.type === 'task.updated' ? useLiveStore.getState().tasks[event.data.id] : undefined;

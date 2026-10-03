@@ -379,10 +379,13 @@ export function createMock({ autoStart = true } = {}) {
   app.post('/push/subscribe', (_req, res) => res.status(201).json({ ok: true }));
   app.post('/pairing/start', (req, res) => {
     const token = id('pair');
-    const origin = req.get('origin') ?? process.env.MOCK_APP_URL ?? 'http://localhost:1420';
+    // The QR must point at a URL the phone can reach. Override both for real-device testing:
+    //   MOCK_APP_URL=http://192.168.1.20:1420 MOCK_API_PUBLIC_URL=http://192.168.1.20:8787
+    const app = process.env.MOCK_APP_URL ?? req.get('origin') ?? 'http://localhost:1420';
+    const api = process.env.MOCK_API_PUBLIC_URL ?? baseUrl();
     state.pairings.push({ token, createdAt: now() });
     res.json({
-      url: `${origin}/pair?token=${token}&api=${encodeURIComponent(baseUrl())}`,
+      url: `${app}/pair?token=${token}&api=${encodeURIComponent(api)}`,
       expiresAt: new Date(Date.now() + 5 * 60_000).toISOString(),
     });
   });

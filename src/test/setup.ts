@@ -11,7 +11,7 @@ if (typeof HTMLDialogElement !== 'undefined') {
 }
 
 // jsdom has no matchMedia; default to a phone-sized viewport (tests override per case).
-if (typeof window.matchMedia === 'undefined') {
+if (typeof window !== 'undefined' && typeof window.matchMedia === 'undefined') {
   window.matchMedia = (query: string): MediaQueryList =>
     ({
       matches: false,
