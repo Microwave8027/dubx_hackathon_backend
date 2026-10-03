@@ -81,7 +81,7 @@ describe('WidgetApp', () => {
     setup();
     expect(screen.getByText('2')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: /open command center/i }));
-    expect(platform.openCommandCenter).toHaveBeenCalledWith();
+    expect(platform.openCommandCenter).toHaveBeenCalledWith(undefined);
   });
 
   it('is never keyboard focusable', () => {

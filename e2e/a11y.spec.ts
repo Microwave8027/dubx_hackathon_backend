@@ -12,6 +12,7 @@ const routes = [
   '/onboarding',
   '/pair',
   '/more',
+  '/widget-preview',
 ];
 
 for (const theme of ['dark', 'light'] as const) {

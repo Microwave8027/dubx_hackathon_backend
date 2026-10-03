@@ -1,0 +1,261 @@
+/*
+ * Widget canvas. Everything that moves animates only transform or opacity, and nothing runs per
+ * frame in JavaScript. The stage is a fixed 320x320 box anchored to the bottom-right of the native
+ * window; the collapsed window (96x48) simply shows its bottom-right corner.
+ */
+.wg-root {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.wg-root.wg-opaque {
+  background: #0b0f19;
+  border-radius: 16px 16px 0 0;
+}
+
+.wg-stage {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 320px;
+  height: 320px;
+  pointer-events: none;
+}
+
+/* ---- the sun ---------------------------------------------------------------------------- */
+.wg-sun {
+  position: absolute;
+  left: 224px;
+  top: 272px;
+  width: 96px;
+  height: 96px;
+  padding: 0;
+  border: 0;
+  background: none;
+  border-radius: 50%; /* a round hit area, so planets near the sun stay clickable */
+  cursor: pointer;
+  pointer-events: auto;
+  transform-origin: 48px 48px;
+  transition: transform 250ms ease;
+  will-change: transform;
+}
+.wg-expanded .wg-sun {
+  transform: translate(-112px, -160px) scale(1.25);
+}
+.wg-sun svg {
+  display: block;
+  overflow: visible;
+}
+.wg-empty .wg-sun {
+  opacity: 0.55;
+}
+.wg-sun-color {
+  color: rgb(var(--status-idle));
+}
+.wg-state-working .wg-sun-color {
+  color: rgb(var(--status-working));
+}
+.wg-state-needs-you .wg-sun-color {
+  color: rgb(var(--status-needs));
+}
+
+.wg-badge {
+  position: absolute;
+  right: 4px;
+  top: 4px;
+  min-width: 20px;
+  padding: 1px 5px;
+  border-radius: 999px;
+  background: rgb(var(--surface));
+  color: rgb(var(--ink));
+  border: 1px solid rgb(var(--line));
+  font:
+    600 12px/16px ui-sans-serif,
+    system-ui,
+    sans-serif;
+  text-align: center;
+  pointer-events: none;
+}
+
+/* Slow pulse when the agent needs you. */
+.wg-state-needs-you .wg-glow {
+  animation: wg-pulse 3.2s ease-in-out infinite;
+}
+/* Rays shimmer slowly while working. */
+.wg-state-working .wg-ray {
+  animation: wg-shimmer 3.6s ease-in-out infinite;
+  animation-delay: calc(var(--i) * -0.3s);
+}
+@keyframes wg-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+@keyframes wg-shimmer {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* ---- planets ---------------------------------------------------------------------------- */
+.wg-orbit {
+  position: absolute;
+  left: 160px;
+  top: 160px;
+  width: 0;
+  height: 0;
+  animation: wg-orbit var(--dur) linear infinite;
+  animation-delay: calc(var(--dur) * var(--phase) * -1);
+  animation-play-state: paused; /* nothing moves while collapsed, so idle CPU stays near zero */
+}
+.wg-expanded .wg-orbit {
+  animation-play-state: running;
+}
+.wg-pos {
+  position: absolute;
+  left: calc(var(--ring) * 1px);
+  top: 0;
+}
+.wg-counter {
+  animation: wg-counter var(--dur) linear infinite;
+  animation-delay: calc(var(--dur) * var(--phase) * -1);
+  animation-play-state: paused;
+}
+.wg-expanded .wg-counter {
+  animation-play-state: running;
+}
+/* Hovering a planet holds it still so it is easy to read and click. */
+.wg-orbit:hover,
+.wg-orbit:hover .wg-counter {
+  animation-play-state: paused;
+}
+@keyframes wg-orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes wg-counter {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+.wg-planet {
+  position: absolute;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  translate: -50% -50%;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}
+.wg-expanded .wg-planet {
+  opacity: 1;
+  pointer-events: auto;
+  transition: opacity 200ms ease calc(140ms + var(--i) * 45ms);
+}
+.wg-planet svg {
+  display: block;
+  overflow: visible;
+}
+.wg-planet-body {
+  fill: currentColor;
+}
+.wg-planet-track {
+  fill: none;
+  stroke: currentColor;
+  stroke-opacity: 0.25;
+  stroke-width: 2;
+}
+.wg-planet-arc {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  transform: rotate(-90deg); /* start the arc at 12 o'clock */
+  transform-box: fill-box; /* rotate about the circle, not the SVG viewBox origin */
+  transform-origin: center;
+}
+.wg-planet-wait {
+  fill: none;
+  stroke: rgb(var(--status-needs));
+  stroke-width: 2.5;
+  animation: wg-pulse 2.4s ease-in-out infinite;
+}
+.wg-planet-more {
+  fill: rgb(var(--surface));
+  stroke: rgb(var(--line));
+}
+.wg-planet-more-text {
+  fill: rgb(var(--ink));
+  font:
+    700 11px ui-sans-serif,
+    system-ui,
+    sans-serif;
+}
+
+/* ---- label ------------------------------------------------------------------------------ */
+.wg-label {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  top: 8px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: rgb(var(--surface));
+  color: rgb(var(--ink));
+  border: 1px solid rgb(var(--line));
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.3);
+  font:
+    400 12px/16px ui-sans-serif,
+    system-ui,
+    sans-serif;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}
+.wg-label strong {
+  display: block;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wg-label span {
+  display: block;
+  color: rgb(var(--muted));
+}
+.wg-expanded .wg-label[data-visible='true'] {
+  opacity: 1;
+  transition-delay: 200ms;
+}
+
+/* ---- reduced motion: planets sit still on their rings and only fade in ------------------- */
+.wg-static .wg-orbit {
+  animation: none;
+  transform: rotate(calc(var(--phase) * 360deg));
+}
+.wg-static .wg-counter {
+  animation: none;
+  transform: rotate(calc(var(--phase) * -360deg));
+}
+.wg-static .wg-glow,
+.wg-static .wg-ray,
+.wg-static .wg-planet-wait {
+  animation: none;
+}
+.wg-static .wg-sun {
+  transition: none;
+}

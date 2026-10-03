@@ -1,5 +1,5 @@
 import type { Approval, Layer, LayerStatus, Task } from '@/api/types';
-import type { TrayState } from '@/platform';
+import type { TrayState, WidgetTarget } from '@/platform';
 
 export const MAX_PLANETS = 7;
 
@@ -140,3 +140,25 @@ export const PLANET_COLOR_VAR: Record<PlanetStatus, string> = {
   paused: '--status-idle',
   waiting_approval: '--status-needs',
 };
+
+/** A planet opens its layer, or the approval when it is waiting on one. */
+export function planetTarget(planet: Planet): WidgetTarget {
+  return planet.status === 'waiting_approval' && planet.approvalId
+    ? { approvalId: planet.approvalId }
+    : { layerId: planet.layerId };
+}
+
+const STATUS_TEXT: Record<PlanetStatus, string> = {
+  starting: 'Starting',
+  running: 'Running',
+  paused: 'Paused',
+  waiting_approval: 'Waiting for approval',
+};
+export const planetStatusText = (status: PlanetStatus): string => STATUS_TEXT[status];
+
+/** "Step 2 of 4: Collecting files", or a count when no step is current. */
+export function planetStepText(planet: Planet): string {
+  if (planet.stepsTotal === 0) return 'No steps yet';
+  if (!planet.currentStep) return `${planet.stepsDone} of ${planet.stepsTotal} steps done`;
+  return `Step ${Math.min(planet.stepsDone + 1, planet.stepsTotal)} of ${planet.stepsTotal}: ${planet.currentStep}`;
+}

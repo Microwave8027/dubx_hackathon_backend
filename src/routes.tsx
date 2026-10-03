@@ -10,8 +10,11 @@ import { OnboardingPage } from '@/features/profile/OnboardingPage';
 import { SettingsPage } from '@/features/profile/SettingsPage';
 import { ApprovalsPage } from '@/features/approvals/ApprovalsPage';
 import { LayerDetail } from '@/features/layers/LayerDetail';
+import { WidgetPreview } from '@/widget/preview/WidgetPreview';
 
 export const routes: RouteObject[] = [
+  // Design and test page for the desktop widget; no app chrome.
+  { path: 'widget-preview', element: <WidgetPreview /> },
   {
     element: <AppShell />,
     children: [

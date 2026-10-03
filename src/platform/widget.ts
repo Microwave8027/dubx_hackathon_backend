@@ -67,6 +67,7 @@ export function createWidgetWindowMethods(): WidgetMethods {
       await getCurrentWindow().show();
     },
     async hideWidget() {
+      expanded = false; // it always comes back at its resting size
       await getCurrentWindow().hide();
     },
     async setWidgetExpanded(next, margin) {

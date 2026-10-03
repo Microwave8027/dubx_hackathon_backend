@@ -5,6 +5,9 @@ import {
   PLANET_RADIUS,
   SUN_COLOR_VAR,
   progressOf,
+  planetStatusText,
+  planetStepText,
+  planetTarget,
   selectPlanets,
   sunState,
   type WidgetData,
@@ -244,5 +247,30 @@ describe('color tokens', () => {
     expect(PLANET_COLOR_VAR.running).toBe('--status-working');
     expect(PLANET_COLOR_VAR.waiting_approval).toBe('--status-needs');
     expect(PLANET_COLOR_VAR.paused).toBe('--status-idle');
+  });
+});
+
+describe('planet click target and label text', () => {
+  const one = (extra: Partial<Layer> = {}, approvals: Approval[] = []) =>
+    selectPlanets(data([task('1')], [layer('1', extra)], approvals)).planets[0]!;
+
+  it('opens the layer, or the approval when the planet is waiting on one', () => {
+    expect(planetTarget(one())).toEqual({ layerId: 'l1' });
+    expect(planetTarget(one({}, [approval('l1')]))).toEqual({ approvalId: 'a-l1' });
+  });
+
+  it('opens the layer when it is waiting but no approval has arrived yet', () => {
+    expect(planetTarget(one({ status: 'waiting_approval' }))).toEqual({ layerId: 'l1' });
+  });
+
+  it('describes status and step', () => {
+    expect(planetStatusText('waiting_approval')).toBe('Waiting for approval');
+    expect(planetStatusText('paused')).toBe('Paused');
+    const steps = [step('done', 0), step('active', 1), step('pending', 2)];
+    expect(planetStepText(one({ steps }))).toBe('Step 2 of 3: Step 1');
+    expect(planetStepText(one())).toBe('No steps yet');
+    expect(planetStepText(one({ steps: [step('done', 0), step('done', 1)] }))).toBe(
+      '2 of 2 steps done',
+    );
   });
 });

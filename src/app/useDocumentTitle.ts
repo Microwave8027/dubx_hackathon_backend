@@ -10,6 +10,7 @@ const titles: [prefix: string, title: string][] = [
   ['/settings', 'Settings'],
   ['/onboarding', 'Welcome'],
   ['/pair', 'Pair a phone'],
+  ['/widget-preview', 'Widget preview'],
   ['/more', 'More'],
 ];
 
