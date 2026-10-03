@@ -13,6 +13,7 @@ vi.mock('@/api/client', () => ({
 }));
 
 function renderAt(path: string) {
+  localStorage.setItem('cc.onboarded', '1');
   const client = new QueryClient();
   render(
     <QueryClientProvider client={client}>

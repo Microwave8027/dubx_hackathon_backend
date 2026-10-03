@@ -41,7 +41,10 @@ for (const [name, opts] of Object.entries(views)) {
     await page.goto(base + path);
     await page.waitForTimeout(2500);
     const slug = path.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '') || 'home';
-    await page.screenshot({ path: `docs/screenshots/${prefix}-${name}-${slug}.png` });
+    await page.screenshot({
+      path: `docs/screenshots/${prefix}-${name}-${slug}.png`,
+      fullPage: Boolean(process.env.FULL), // FULL=1 captures the whole page
+    });
     void i;
   }
   await ctx.close();

@@ -1,4 +1,5 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { OnboardingGate } from '@/app/OnboardingGate';
 import { PlatformBridge } from '@/app/PlatformBridge';
 import { ApprovalAnnouncer } from '@/features/approvals/ApprovalAnnouncer';
 import { useDashboardTab } from '@/features/useDashboardTab';
@@ -98,6 +99,7 @@ export function AppShell() {
       <Toaster />
       <ApprovalAnnouncer />
       <PlatformBridge />
+      <OnboardingGate />
     </div>
   );
 }
