@@ -1,4 +1,6 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { PlatformBridge } from '@/app/PlatformBridge';
+import { ApprovalAnnouncer } from '@/features/approvals/ApprovalAnnouncer';
 import { useDashboardTab } from '@/features/useDashboardTab';
 import { useThemeStore } from '@/theme/themeStore';
 import { ConnectionBanner } from './ConnectionBanner';
@@ -34,7 +36,15 @@ function MobileTabBar() {
       className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] mid:hidden"
     >
       {tabs.map((t) => {
-        const active = t.tab ? pathname === '/' && current === t.tab : !['/'].includes(pathname);
+        const onDash = pathname === '/';
+        const active =
+          t.tab === 'tasks'
+            ? onDash && current === 'tasks'
+            : t.tab === 'layers'
+              ? (onDash && current === 'layers') || pathname.startsWith('/layers/')
+              : t.tab === 'approvals'
+                ? (onDash && current === 'approvals') || pathname === '/approvals'
+                : !onDash && pathname !== '/approvals' && !pathname.startsWith('/layers/');
         return (
           <NavLink
             key={t.label}
@@ -83,6 +93,8 @@ export function AppShell() {
       </div>
       <MobileTabBar />
       <Toaster />
+      <ApprovalAnnouncer />
+      <PlatformBridge />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { useLiveStore } from '@/state/store';
 import { api } from './client';
 import { getWsUrl } from './config';
 import { queryKeys } from './queries';
+import { notifyForEvent } from '@/notifications/notifyEvents';
 import { createWsClient } from './ws';
 
 /** Keeps the Zustand store live: REST hydrates it, WS events update it, reconnect refetches all. */
@@ -35,6 +36,9 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
     const client = createWsClient({
       url: () => getWsUrl(),
       onEvent: (event) => {
+        const previousTask =
+          event.type === 'task.updated' ? useLiveStore.getState().tasks[event.data.id] : undefined;
+        void notifyForEvent(event, previousTask);
         store.applyEvent(event);
         if (event.type === 'briefing.ready') {
           void queryClient.invalidateQueries({ queryKey: queryKeys.briefing });

@@ -3,6 +3,7 @@ import { AppShell } from '@/components/AppShell';
 import { Placeholder } from '@/components/Placeholder';
 import { Dashboard } from '@/features/Dashboard';
 import { More } from '@/features/More';
+import { ApprovalsPage } from '@/features/approvals/ApprovalsPage';
 import { LayerDetail } from '@/features/layers/LayerDetail';
 
 export const routes: RouteObject[] = [
@@ -12,10 +13,7 @@ export const routes: RouteObject[] = [
       { index: true, element: <Dashboard /> },
       { path: 'more', element: <More /> },
       { path: 'layers/:layerId', element: <LayerDetail /> },
-      {
-        path: 'approvals',
-        element: <Placeholder title="Approvals" note="Decisions waiting on you." />,
-      },
+      { path: 'approvals', element: <ApprovalsPage /> },
       {
         path: 'briefing',
         element: <Placeholder title="Briefing" note="Your morning and evening summary." />,

@@ -14,18 +14,37 @@ vi.mock('@/api/client', () => ({
   },
 }));
 
+function setViewport(mid: boolean) {
+  window.matchMedia = ((query: string) => ({
+    matches: mid,
+    media: query,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  })) as unknown as typeof window.matchMedia;
+}
+
 describe('Dashboard', () => {
-  it('renders the three panels in the DOM and marks inactive ones hidden on phones', () => {
+  it('on a phone mounts only the active panel', () => {
+    setViewport(false);
     renderWithProviders(<Dashboard />, '/?tab=layers');
-    const layers = screen.getByRole('heading', { name: 'Layers' }).closest('section');
-    const tasks = screen.getByRole('heading', { name: 'Tasks' }).closest('section');
-    expect(layers).toHaveClass('block');
-    expect(tasks).toHaveClass('hidden', 'mid:block');
+    expect(screen.getByRole('heading', { name: 'Layers' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Tasks' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Approvals' })).not.toBeInTheDocument();
   });
 
-  it('defaults to the tasks tab', () => {
+  it('defaults to the tasks tab on a phone', () => {
+    setViewport(false);
     renderWithProviders(<Dashboard />);
-    expect(screen.getByRole('heading', { name: 'Tasks' }).closest('section')).toHaveClass('block');
+    expect(screen.getByRole('heading', { name: 'Tasks' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Layers' })).not.toBeInTheDocument();
+  });
+
+  it('on wide screens shows all three panels', () => {
+    setViewport(true);
+    renderWithProviders(<Dashboard />);
+    for (const name of ['Tasks', 'Layers', 'Approvals']) {
+      expect(screen.getByRole('heading', { name })).toBeInTheDocument();
+    }
   });
 });
 

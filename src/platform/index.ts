@@ -3,6 +3,7 @@ import { createTauriPlatform } from './tauri';
 import type { Platform } from './types';
 
 export type { NotifyOptions, Platform, TrayState } from './types';
+export { onPlatformEvent, emitPlatformEvent, type PlatformEvent } from './events';
 
 export function detectTauri(): boolean {
   return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;

@@ -9,3 +9,18 @@ if (typeof HTMLDialogElement !== 'undefined') {
     this.removeAttribute('open');
   };
 }
+
+// jsdom has no matchMedia; default to a phone-sized viewport (tests override per case).
+if (typeof window.matchMedia === 'undefined') {
+  window.matchMedia = (query: string): MediaQueryList =>
+    ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      addListener: () => {},
+      removeListener: () => {},
+      dispatchEvent: () => false,
+    }) as MediaQueryList;
+}
