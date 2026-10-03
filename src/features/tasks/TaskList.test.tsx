@@ -54,3 +54,18 @@ describe('TaskList offline', () => {
     expect(screen.queryByRole('status', { name: 'Loading' })).not.toBeInTheDocument();
   });
 });
+
+describe('TaskList offline after loading', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('keeps showing the empty state when the panel already loaded and then goes offline', async () => {
+    listTasks.mockResolvedValue([]);
+    const online = vi.spyOn(window.navigator, 'onLine', 'get').mockReturnValue(true);
+    renderWithProviders(<TaskList />);
+    expect(await screen.findByText('No tasks yet')).toBeInTheDocument();
+    online.mockReturnValue(false);
+    window.dispatchEvent(new Event('offline'));
+    expect(await screen.findByText('No tasks yet')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+});

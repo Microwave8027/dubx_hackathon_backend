@@ -1,10 +1,13 @@
+import { useEffect, useRef } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { OnboardingGate } from '@/app/OnboardingGate';
 import { PlatformBridge } from '@/app/PlatformBridge';
+import { useDocumentTitle } from '@/app/useDocumentTitle';
 import { ApprovalAnnouncer } from '@/features/approvals/ApprovalAnnouncer';
 import { useDashboardTab } from '@/features/useDashboardTab';
 import { useThemeStore } from '@/theme/themeStore';
 import { ConnectionBanner } from './ConnectionBanner';
+import { ErrorBoundary } from './ErrorBoundary';
 import { PendingBadge } from './PendingBadge';
 import { Toaster } from './Toaster';
 
@@ -66,8 +69,29 @@ function MobileTabBar() {
 
 export function AppShell() {
   const { theme, toggle } = useThemeStore();
+  const { pathname } = useLocation();
+  const mainRef = useRef<HTMLElement>(null);
+  const first = useRef(true);
+  useDocumentTitle();
+
+  // Move focus to the new screen on navigation so keyboard and screen-reader users are not
+  // left on a link that no longer exists. Skipped on first load.
+  useEffect(() => {
+    if (first.current) {
+      first.current = false;
+      return;
+    }
+    mainRef.current?.focus({ preventScroll: true });
+  }, [pathname]);
+
   return (
     <div className="flex min-h-screen flex-col mid:flex-row">
+      <a
+        href="#main"
+        className="sr-only z-50 rounded-lg bg-accent px-4 py-3 text-sm font-semibold text-bg focus:not-sr-only focus:absolute focus:left-3 focus:top-3"
+      >
+        Skip to main content
+      </a>
       <aside className="hidden w-56 shrink-0 flex-col gap-1 border-r border-line bg-surface p-3 mid:flex">
         <div className="px-3 py-3 text-base font-semibold">Command Center</div>
         <nav aria-label="Primary" className="flex flex-col gap-1">
@@ -90,9 +114,13 @@ export function AppShell() {
         <ConnectionBanner />
         <main
           id="main"
-          className="min-w-0 flex-1 p-4 pb-24 pt-[max(1rem,env(safe-area-inset-top))] mid:p-6 mid:pb-6"
+          ref={mainRef}
+          tabIndex={-1}
+          className="min-w-0 flex-1 outline-none p-4 pb-24 pt-[max(1rem,env(safe-area-inset-top))] mid:p-6 mid:pb-6"
         >
-          <Outlet />
+          <ErrorBoundary key={pathname}>
+            <Outlet />
+          </ErrorBoundary>
         </main>
       </div>
       <MobileTabBar />

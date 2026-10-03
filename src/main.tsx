@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RealtimeProvider } from '@/api/RealtimeProvider';
 import { registerServiceWorker } from '@/pwa/register';
 import { initTransport } from '@/pairing/pair';
+import { maybeSeedDemo } from '@/demo';
 import { createRouter } from '@/routes';
 import { applyTheme, useThemeStore } from '@/theme/themeStore';
 import './index.css';
@@ -17,7 +18,7 @@ const queryClient = new QueryClient({
 });
 
 // A relay pairing must be active before the first request, so resolve it before rendering.
-void initTransport().finally(() => {
+void Promise.all([initTransport(), maybeSeedDemo()]).finally(() => {
   ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     <React.StrictMode>
       <QueryClientProvider client={queryClient}>

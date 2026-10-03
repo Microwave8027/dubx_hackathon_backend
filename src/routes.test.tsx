@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { vi } from 'vitest';
@@ -33,5 +34,30 @@ describe('router shell', () => {
   it('renders approvals route', () => {
     renderAt('/approvals');
     expect(screen.getByRole('heading', { name: 'Approvals' })).toBeInTheDocument();
+  });
+
+  it('offers a skip link to the main content', () => {
+    renderAt('/');
+    expect(screen.getByRole('link', { name: 'Skip to main content' })).toHaveAttribute(
+      'href',
+      '#main',
+    );
+  });
+
+  it('moves focus to the main content after navigating, but not on first load', async () => {
+    renderAt('/');
+    const main = document.querySelector('main#main');
+    expect(main).not.toHaveFocus();
+    await userEvent.click(screen.getAllByRole('link', { name: 'Settings' })[0]!);
+    expect(main).toHaveFocus();
+  });
+
+  it('shows a not-found page with a way back', () => {
+    renderAt('/nope/nothing');
+    expect(screen.getByRole('heading', { name: 'Page not found' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Back to the dashboard' })).toHaveAttribute(
+      'href',
+      '/',
+    );
   });
 });

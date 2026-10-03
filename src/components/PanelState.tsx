@@ -32,7 +32,8 @@ export function PanelState({
       </div>
     );
   }
-  if ((error || !online) && isEmpty) {
+  // Offline only matters if we never got an answer; a loaded-but-empty panel is just empty.
+  if ((error || (isLoading && !online)) && isEmpty) {
     return (
       <div role="alert" className="rounded-card border border-line bg-surface p-4 text-sm">
         <p className="font-medium">{online ? 'Could not reach the agent.' : 'You are offline.'}</p>

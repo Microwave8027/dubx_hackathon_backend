@@ -38,7 +38,7 @@ function TaskRow({ task }: { task: Task }) {
         {task.scheduledFor && <span>Scheduled {new Date(task.scheduledFor).toLocaleString()}</span>}
         {task.layerId && (
           <Link
-            className="rounded underline underline-offset-2 hover:text-ink"
+            className="inline-flex min-h-touch items-center rounded underline underline-offset-2 hover:text-ink"
             to={`/layers/${task.layerId}`}
           >
             View layer

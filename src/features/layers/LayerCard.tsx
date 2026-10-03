@@ -26,7 +26,7 @@ export const LayerCard = memo(function LayerCard({ layer }: { layer: Layer }) {
       <div>
         <Link
           to={`/layers/${layer.id}`}
-          className="break-words text-sm font-semibold hover:underline"
+          className="inline-flex min-h-touch items-center break-words text-sm font-semibold hover:underline"
         >
           {taskText ?? layer.taskId}
         </Link>

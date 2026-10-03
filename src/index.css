@@ -7,15 +7,16 @@
   --bg: 248 250 252;
   --surface: 255 255 255;
   --raised: 241 245 249;
-  --line: 226 232 240;
+  --line: 203 213 225;
   --ink: 15 23 42;
-  --muted: 100 116 139;
-  --accent: 37 99 235;
-  --status-idle: 100 116 139;
-  --status-working: 37 99 235;
-  --status-needs: 217 119 6;
-  --status-done: 22 163 74;
-  --status-error: 220 38 38;
+  --muted: 71 85 105;
+  --accent: 29 78 216;
+  /* Light-theme status colors are dark enough for 4.5:1 on white and on their own 15% tint. */
+  --status-idle: 71 85 105;
+  --status-working: 29 78 216;
+  --status-needs: 146 64 14;
+  --status-done: 22 101 52;
+  --status-error: 185 28 28;
 }
 
 :root.dark {

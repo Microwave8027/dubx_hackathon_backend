@@ -26,6 +26,14 @@ const browser = await chromium.launch();
 let problems = 0;
 for (const [name, opts] of Object.entries(views)) {
   const ctx = await browser.newContext(opts);
+  // THEME=light captures the light theme.
+  if (process.env.THEME) {
+    await ctx.addInitScript((t) => localStorage.setItem('cc.theme', t), process.env.THEME);
+  }
+  // ONBOARDED=1 skips the first-run redirect to onboarding.
+  if (process.env.ONBOARDED) {
+    await ctx.addInitScript(() => localStorage.setItem('cc.onboarded', '1'));
+  }
   const page = await ctx.newPage();
   page.on('console', (m) => {
     if (['error', 'warning'].includes(m.type())) {

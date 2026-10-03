@@ -1,6 +1,6 @@
 import { createBrowserRouter, type RouteObject } from 'react-router-dom';
 import { AppShell } from '@/components/AppShell';
-import { Placeholder } from '@/components/Placeholder';
+import { NotFound } from '@/components/NotFound';
 import { Dashboard } from '@/features/Dashboard';
 import { More } from '@/features/More';
 import { BriefingPage } from '@/features/briefing/BriefingPage';
@@ -24,7 +24,7 @@ export const routes: RouteObject[] = [
       { path: 'settings', element: <SettingsPage /> },
       { path: 'onboarding', element: <OnboardingPage /> },
       { path: 'pair', element: <PairingPage /> },
-      { path: '*', element: <Placeholder title="Not found" note="That page does not exist." /> },
+      { path: '*', element: <NotFound /> },
     ],
   },
 ];

@@ -396,6 +396,11 @@ export function createMock({ autoStart = true } = {}) {
     seedDefaults();
     res.json({ ok: true });
   });
+  // Raises an approval on a running layer right now (used by tests).
+  app.post('/__mock/approval', (_req, res) => {
+    randomApproval();
+    res.json({ ok: true });
+  });
   app.post('/__mock/reset', (_req, res) => {
     reset();
     seedDefaults();
