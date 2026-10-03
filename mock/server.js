@@ -2,6 +2,7 @@
 import express from 'express';
 import { createServer } from 'node:http';
 import { pathToFileURL } from 'node:url';
+import { generateKeyPairSync } from 'node:crypto';
 import { WebSocketServer } from 'ws';
 import { ACTION_CATEGORIES, SCRIPTS, createState, id, now } from './state.js';
 import { contextScreenshotSvg, makeFrame } from './frames.js';
@@ -11,8 +12,22 @@ const STEP_MS = Number(process.env.MOCK_STEP_MS ?? 6000);
 const APPROVAL_EVERY_MS = Number(process.env.MOCK_APPROVAL_MS ?? 30000);
 const FRAME_MS = 500;
 
+// A throwaway P-256 key so the browser's pushManager.subscribe() accepts the key in dev.
+// The mock never sends pushes. Override with MOCK_VAPID_PUBLIC_KEY.
+function makeVapidPublicKey() {
+  const { publicKey } = generateKeyPairSync('ec', { namedCurve: 'prime256v1' });
+  const jwk = publicKey.export({ format: 'jwk' });
+  const raw = Buffer.concat([
+    Buffer.from([4]),
+    Buffer.from(jwk.x, 'base64url'),
+    Buffer.from(jwk.y, 'base64url'),
+  ]);
+  return raw.toString('base64url');
+}
+
 export function createMock({ autoStart = true } = {}) {
   const state = createState();
+  const vapidPublicKey = process.env.MOCK_VAPID_PUBLIC_KEY ?? makeVapidPublicKey();
   const app = express();
   const server = createServer(app);
   const wss = new WebSocketServer({ server, path: '/events' });
@@ -360,9 +375,7 @@ export function createMock({ autoStart = true } = {}) {
     e.undone = true;
     res.json(e);
   });
-  app.get('/push/vapid-key', (_req, res) =>
-    res.json({ publicKey: process.env.MOCK_VAPID_PUBLIC_KEY ?? '' }),
-  );
+  app.get('/push/vapid-key', (_req, res) => res.json({ publicKey: vapidPublicKey }));
   app.post('/push/subscribe', (_req, res) => res.status(201).json({ ok: true }));
   app.post('/pairing/start', (req, res) => {
     const token = id('pair');

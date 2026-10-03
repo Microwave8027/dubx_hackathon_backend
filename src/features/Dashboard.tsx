@@ -2,6 +2,7 @@ import { Panel } from '@/components/Panel';
 import { useDashboardTab, type DashboardTab } from './useDashboardTab';
 import { ApprovalsList } from './approvals/ApprovalsList';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { InstallGuide } from './install/InstallGuide';
 import { LayersPanel } from './layers/LayersPanel';
 import { AddTask } from './tasks/AddTask';
 import { TaskList } from './tasks/TaskList';
@@ -16,6 +17,11 @@ export function Dashboard() {
   return (
     <div className="grid gap-6 mid:grid-cols-2 wide:grid-cols-3">
       <h1 className="sr-only">Dashboard</h1>
+      {!mid && tab === 'tasks' && (
+        <div className="-mb-2">
+          <InstallGuide dismissible />
+        </div>
+      )}
       {show('tasks') && (
         <Panel title="Tasks" className="mid:row-span-2 wide:row-span-1">
           <div className="mb-4">

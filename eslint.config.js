@@ -22,7 +22,8 @@ export default tseslint.config(
   {
     files: ['**/*.js', '**/*.mjs'],
     extends: [js.configs.recommended],
-    languageOptions: { globals: globals.node },
+    // Scripts also contain page.evaluate() callbacks that run in the browser.
+    languageOptions: { globals: { ...globals.node, ...globals.browser } },
   },
   prettier,
 );

@@ -12,6 +12,13 @@ const views = {
     isMobile: true,
     hasTouch: true,
     deviceScaleFactor: 2,
+    // IOS=1 emulates iPhone Safari so the iOS-only Add to Home Screen card shows.
+    ...(process.env.IOS
+      ? {
+          userAgent:
+            'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+        }
+      : {}),
   },
 };
 

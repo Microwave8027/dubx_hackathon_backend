@@ -22,7 +22,8 @@ export function PanelState({
   children,
 }: Props) {
   const online = useOnline();
-  if (isLoading && isEmpty) {
+  // Offline with nothing cached: say so now instead of showing skeletons while retries run.
+  if (isLoading && isEmpty && online) {
     return (
       <div role="status" aria-label="Loading" className="space-y-3">
         {[0, 1, 2].map((i) => (
@@ -31,7 +32,7 @@ export function PanelState({
       </div>
     );
   }
-  if (error && isEmpty) {
+  if ((error || !online) && isEmpty) {
     return (
       <div role="alert" className="rounded-card border border-line bg-surface p-4 text-sm">
         <p className="font-medium">{online ? 'Could not reach the agent.' : 'You are offline.'}</p>

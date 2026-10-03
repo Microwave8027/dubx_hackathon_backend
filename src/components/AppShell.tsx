@@ -87,7 +87,10 @@ export function AppShell() {
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
         <ConnectionBanner />
-        <main id="main" className="min-w-0 flex-1 p-4 pb-24 mid:p-6 mid:pb-6">
+        <main
+          id="main"
+          className="min-w-0 flex-1 p-4 pb-24 pt-[max(1rem,env(safe-area-inset-top))] mid:p-6 mid:pb-6"
+        >
           <Outlet />
         </main>
       </div>

@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useThemeStore } from '@/theme/themeStore';
+import { InstallGuide } from './install/InstallGuide';
+import { PushToggle } from './install/PushToggle';
 
 const links = [
   { to: '/briefing', label: 'Briefing', hint: 'Your morning and evening summary' },
@@ -15,6 +17,10 @@ export function More() {
       <h1 id="more-title" className="mb-4 text-xl font-semibold">
         More
       </h1>
+      <div className="mb-4 space-y-3">
+        <InstallGuide />
+        <PushToggle />
+      </div>
       <ul className="space-y-2">
         {links.map((l) => (
           <li key={l.to}>

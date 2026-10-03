@@ -42,3 +42,15 @@ describe('TaskList', () => {
     expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
   });
 });
+
+describe('TaskList offline', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('says you are offline instead of showing skeletons', () => {
+    listTasks.mockReturnValue(new Promise(() => {}));
+    vi.spyOn(window.navigator, 'onLine', 'get').mockReturnValue(false);
+    renderWithProviders(<TaskList />);
+    expect(screen.getByRole('alert')).toHaveTextContent('You are offline.');
+    expect(screen.queryByRole('status', { name: 'Loading' })).not.toBeInTheDocument();
+  });
+});
