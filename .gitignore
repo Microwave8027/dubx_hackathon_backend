@@ -22,3 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Env, build output, Playwright
+.env
+.env.*
+!.env.example
+playwright-report
+test-results

@@ -1,25 +1,26 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "dubx-app",
+  "productName": "Command Center",
   "version": "0.1.0",
   "identifier": "com.micro.dubx-app",
   "build": {
-    "beforeDevCommand": "bun run dev",
+    "beforeDevCommand": "pnpm dev",
     "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "bun run build",
+    "beforeBuildCommand": "pnpm build",
     "frontendDist": "../dist"
   },
   "app": {
     "windows": [
       {
-        "title": "dubx-app",
-        "width": 800,
-        "height": 600
+        "label": "main",
+        "title": "Command Center",
+        "width": 1200,
+        "height": 800,
+        "minWidth": 360,
+        "minHeight": 480
       }
     ],
-    "security": {
-      "csp": null
-    }
+    "security": { "csp": null }
   },
   "bundle": {
     "active": true,

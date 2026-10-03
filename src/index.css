@@ -1,0 +1,59 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Token values (space-separated RGB so Tailwind can apply alpha). Names are mapped in tailwind.config.js. */
+:root {
+  --bg: 248 250 252;
+  --surface: 255 255 255;
+  --raised: 241 245 249;
+  --line: 226 232 240;
+  --ink: 15 23 42;
+  --muted: 100 116 139;
+  --accent: 37 99 235;
+  --status-idle: 100 116 139;
+  --status-working: 37 99 235;
+  --status-needs: 217 119 6;
+  --status-done: 22 163 74;
+  --status-error: 220 38 38;
+}
+
+:root.dark {
+  --bg: 11 15 25;
+  --surface: 17 24 39;
+  --raised: 30 41 59;
+  --line: 51 65 85;
+  --ink: 226 232 240;
+  --muted: 148 163 184;
+  --accent: 96 165 250;
+  --status-idle: 148 163 184;
+  --status-working: 96 165 250;
+  --status-needs: 251 191 36;
+  --status-done: 74 222 128;
+  --status-error: 248 113 113;
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-bg font-sans text-ink antialiased;
+  }
+  :focus-visible {
+    @apply outline-none ring-2 ring-accent ring-offset-2 ring-offset-bg;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
