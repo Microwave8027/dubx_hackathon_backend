@@ -108,7 +108,7 @@ export function DesktopPairing() {
         type="button"
         onClick={() => start.mutate()}
         disabled={start.isPending}
-        className="min-h-touch w-full rounded-lg bg-accent px-4 text-sm font-semibold text-bg disabled:opacity-50"
+        className="min-h-touch w-full rounded-lg bg-accent px-4 text-sm font-semibold text-on-accent disabled:opacity-50"
       >
         {start.isPending ? 'Making code…' : start.data ? 'Make a new code' : 'Show pairing code'}
       </button>

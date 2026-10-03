@@ -48,7 +48,7 @@ function WindowRow({
                 onClick={() => toggleDay(d)}
                 className={`min-h-touch min-w-touch rounded-full border px-3 text-sm font-medium ${
                   on
-                    ? 'border-accent bg-accent/15 text-accent'
+                    ? 'border-accent bg-accent/15 text-accent-ink'
                     : 'border-line text-muted hover:text-ink'
                 }`}
               >

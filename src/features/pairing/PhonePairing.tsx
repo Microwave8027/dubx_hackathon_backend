@@ -23,7 +23,7 @@ export function InvalidPairingLink() {
       <p className="text-sm text-muted">
         It may be incomplete or expired. Go back to the computer and make a new code.
       </p>
-      <Link to="/" className="inline-flex min-h-touch items-center text-accent underline">
+      <Link to="/" className="inline-flex min-h-touch items-center text-accent-ink underline">
         Back to the app
       </Link>
     </section>
@@ -62,7 +62,7 @@ export function PhonePairing({ params }: { params: PairingParams }) {
           type="button"
           // A full load so the live connection starts against the newly paired agent.
           onClick={() => window.location.assign('/')}
-          className="min-h-touch w-full rounded-lg bg-accent px-4 text-sm font-semibold text-bg"
+          className="min-h-touch w-full rounded-lg bg-accent px-4 text-sm font-semibold text-on-accent"
         >
           Open Command Center
         </button>
@@ -103,7 +103,7 @@ export function PhonePairing({ params }: { params: PairingParams }) {
           type="button"
           onClick={() => void pair()}
           disabled={state === 'saving'}
-          className="min-h-touch flex-1 rounded-lg bg-accent px-4 text-sm font-semibold text-bg disabled:opacity-50"
+          className="min-h-touch flex-1 rounded-lg bg-accent px-4 text-sm font-semibold text-on-accent disabled:opacity-50"
         >
           {state === 'saving' ? 'Pairing…' : 'Pair this device'}
         </button>

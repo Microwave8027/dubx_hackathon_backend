@@ -37,7 +37,7 @@ function PairedDevices() {
         <h3 className="text-sm font-medium">Paired devices</h3>
         <Link
           to="/pair"
-          className="inline-flex min-h-touch items-center text-sm text-accent underline underline-offset-2"
+          className="inline-flex min-h-touch items-center text-sm text-accent-ink underline underline-offset-2"
         >
           Pair a phone
         </Link>
@@ -141,7 +141,7 @@ export function ConnectionSection() {
           <button
             type="submit"
             disabled={invalid || !changed}
-            className="min-h-touch rounded-lg bg-accent px-4 text-sm font-semibold text-bg disabled:opacity-50"
+            className="min-h-touch rounded-lg bg-accent px-4 text-sm font-semibold text-on-accent disabled:opacity-50"
           >
             Save address
           </button>

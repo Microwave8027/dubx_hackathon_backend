@@ -70,7 +70,7 @@ export function InstallGuide({ dismissible = false }: { dismissible?: boolean })
           <button
             type="button"
             onClick={() => void promptInstall()}
-            className="min-h-touch rounded-lg bg-accent px-4 text-sm font-semibold text-bg"
+            className="min-h-touch rounded-lg bg-accent px-4 text-sm font-semibold text-on-accent"
           >
             Install
           </button>

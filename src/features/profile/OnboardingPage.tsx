@@ -121,7 +121,7 @@ export function OnboardingPage() {
               type="button"
               onClick={() => save.mutate(draft)}
               disabled={hasErrors(errors) || save.isPending}
-              className="min-h-touch rounded-lg bg-accent px-5 text-sm font-semibold text-bg disabled:opacity-50"
+              className="min-h-touch rounded-lg bg-accent px-5 text-sm font-semibold text-on-accent disabled:opacity-50"
             >
               {save.isPending ? 'Saving…' : 'Finish'}
             </button>
@@ -130,7 +130,7 @@ export function OnboardingPage() {
               type="button"
               onClick={next}
               disabled={step === 0 ? !result : hasErrors(errors)}
-              className="min-h-touch rounded-lg bg-accent px-5 text-sm font-semibold text-bg disabled:opacity-50"
+              className="min-h-touch rounded-lg bg-accent px-5 text-sm font-semibold text-on-accent disabled:opacity-50"
             >
               Next
             </button>

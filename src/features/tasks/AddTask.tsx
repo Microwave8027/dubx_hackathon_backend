@@ -80,7 +80,7 @@ export function AddTask() {
       <button
         type="submit"
         disabled={!text.trim() || create.isPending}
-        className="min-h-touch rounded-lg bg-accent px-4 text-sm font-semibold text-bg disabled:opacity-50"
+        className="min-h-touch rounded-lg bg-accent px-4 text-sm font-semibold text-on-accent disabled:opacity-50"
       >
         {create.isPending ? 'Adding…' : 'Add'}
       </button>

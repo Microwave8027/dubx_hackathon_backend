@@ -49,7 +49,7 @@ function ProfileForm({ initial }: { initial: Profile }) {
       >
         <p className="text-sm">
           Chronotype: <strong>{chronotypeLabel[draft.chronotype]}</strong>{' '}
-          <Link to="/onboarding" className="ml-1 text-accent underline underline-offset-2">
+          <Link to="/onboarding" className="ml-1 text-accent-ink underline underline-offset-2">
             Retake the questionnaire
           </Link>
         </p>
@@ -87,7 +87,7 @@ function ProfileForm({ initial }: { initial: Profile }) {
               onClick={() => setTheme(t)}
               className={`min-h-touch px-5 text-sm font-medium capitalize ${
                 theme === t
-                  ? 'bg-accent/20 text-accent'
+                  ? 'bg-accent/20 text-accent-ink'
                   : 'text-muted hover:bg-raised hover:text-ink'
               }`}
             >
@@ -135,7 +135,7 @@ function ProfileForm({ initial }: { initial: Profile }) {
               type="button"
               onClick={() => save.mutate(draft)}
               disabled={hasErrors(errors) || save.isPending}
-              className="min-h-touch rounded-lg bg-accent px-4 text-sm font-semibold text-bg disabled:opacity-50"
+              className="min-h-touch rounded-lg bg-accent px-4 text-sm font-semibold text-on-accent disabled:opacity-50"
             >
               {save.isPending ? 'Saving…' : 'Save changes'}
             </button>

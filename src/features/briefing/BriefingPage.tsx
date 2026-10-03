@@ -79,7 +79,7 @@ function BriefingBody({ briefing }: { briefing: Briefing }) {
                   {layerId && (
                     <Link
                       to={`/layers/${layerId}`}
-                      className="mt-1 inline-flex min-h-touch items-center text-xs text-accent underline underline-offset-2"
+                      className="mt-1 inline-flex min-h-touch items-center text-xs text-accent-ink underline underline-offset-2"
                     >
                       View layer
                     </Link>

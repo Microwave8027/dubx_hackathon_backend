@@ -4,16 +4,20 @@
 
 /* Token values (space-separated RGB so Tailwind can apply alpha). Names are mapped in tailwind.config.js. */
 :root {
-  --bg: 248 250 252;
-  --surface: 255 255 255;
-  --raised: 241 245 249;
-  --line: 203 213 225;
-  --ink: 15 23 42;
-  --muted: 71 85 105;
-  --accent: 29 78 216;
-  /* Light-theme status colors are dark enough for 4.5:1 on white and on their own 15% tint. */
+  --bg: 237 224 212;
+  --surface: 248 241 234;
+  --raised: 230 213 196;
+  --line: 207 184 160;
+  --ink: 31 26 20;
+  --muted: 92 77 63;
+  /* Fills (buttons, focus ring) use the brand orange; text uses the darker -ink variant for AA. */
+  --accent: 202 103 2;
+  --accent-ink: 124 61 0;
+  --on-accent: 18 12 4;
+  --imprint-opacity: 1;
+  /* Light-theme status colors are dark enough for 4.5:1 on the surface and on their own 15% tint. */
   --status-idle: 71 85 105;
-  --status-working: 29 78 216;
+  --status-working: 150 75 0;
   --status-needs: 146 64 14;
   --status-done: 22 101 52;
   --status-error: 185 28 28;
@@ -26,9 +30,12 @@
   --line: 51 65 85;
   --ink: 226 232 240;
   --muted: 148 163 184;
-  --accent: 96 165 250;
+  --accent: 202 103 2;
+  --accent-ink: 240 160 70;
+  --on-accent: 11 15 25;
+  --imprint-opacity: 0.07;
   --status-idle: 148 163 184;
-  --status-working: 96 165 250;
+  --status-working: 224 128 30;
   --status-needs: 251 191 36;
   --status-done: 74 222 128;
   --status-error: 248 113 113;

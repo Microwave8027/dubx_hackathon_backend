@@ -59,7 +59,7 @@ export function LayerDetail() {
         <p className="mt-2 text-sm text-muted">
           {query.error ? 'Could not reach the agent.' : 'It may have been cleaned up.'}
         </p>
-        <Link to="/?tab=layers" className="mt-3 inline-flex min-h-touch items-center underline">
+        <Link to="/" className="mt-3 inline-flex min-h-touch items-center underline">
           Back to layers
         </Link>
       </section>
@@ -69,7 +69,7 @@ export function LayerDetail() {
   return (
     <section aria-labelledby="layer-title" className="mx-auto max-w-4xl space-y-5">
       <Link
-        to="/?tab=layers"
+        to="/"
         className="inline-flex min-h-touch items-center text-sm text-muted hover:text-ink"
       >
         ← Layers

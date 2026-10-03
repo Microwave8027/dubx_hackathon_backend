@@ -7,7 +7,7 @@ export function NotFound() {
         Page not found
       </h1>
       <p className="mt-2 text-sm text-muted">That page does not exist.</p>
-      <Link to="/" className="mt-3 inline-flex min-h-touch items-center text-accent underline">
+      <Link to="/" className="mt-3 inline-flex min-h-touch items-center text-accent-ink underline">
         Back to the dashboard
       </Link>
     </section>

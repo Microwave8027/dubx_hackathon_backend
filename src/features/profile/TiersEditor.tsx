@@ -71,7 +71,7 @@ export function TiersEditor({
                           ? 'bg-status-error/20 text-status-error'
                           : o.value === 'auto'
                             ? 'bg-status-done/20 text-status-done'
-                            : 'bg-accent/20 text-accent'
+                            : 'bg-accent/20 text-accent-ink'
                         : 'text-muted hover:bg-raised hover:text-ink'
                     } ${locked ? 'cursor-not-allowed opacity-60' : ''}`}
                   >

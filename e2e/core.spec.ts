@@ -18,7 +18,7 @@ test.describe('core flows', () => {
   });
 
   test('watch a layer run: live preview updates and steps advance', async ({ app }) => {
-    await app.goto('/?tab=layers');
+    await app.goto('/');
     const card = app.getByRole('article', { name: 'Organize a test Downloads folder' });
     await card.scrollIntoViewIfNeeded(); // offscreen tiles intentionally do not update
 
@@ -84,7 +84,7 @@ test.describe('core flows', () => {
   });
 
   test('kill a layer with confirmation', async ({ app }) => {
-    await app.goto('/?tab=layers');
+    await app.goto('/');
     const card = app.getByRole('article', { name: 'Research a topic and write a summary file' });
     await card.scrollIntoViewIfNeeded();
     await card.getByRole('button', { name: 'Kill' }).click();

@@ -49,7 +49,7 @@ test.describe('states and modes', () => {
 
   test('touch targets are at least 44px on the main screens (phone)', async ({ app }, info) => {
     test.skip(info.project.name !== 'phone', 'touch target size is a phone concern');
-    for (const path of ['/', '/?tab=layers', '/approvals', '/log', '/settings', '/more']) {
+    for (const path of ['/', '/approvals', '/log', '/settings', '/more']) {
       await app.goto(path);
       await app.waitForTimeout(800);
       const small = await app.evaluate(() => {

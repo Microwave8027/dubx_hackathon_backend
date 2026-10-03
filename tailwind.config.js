@@ -23,6 +23,8 @@ export default {
           error: rgb('status-error'),
         },
         accent: rgb('accent'),
+        'accent-ink': rgb('accent-ink'),
+        'on-accent': rgb('on-accent'),
       },
       minHeight: { touch: '44px' },
       minWidth: { touch: '44px' },

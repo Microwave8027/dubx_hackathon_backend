@@ -84,7 +84,7 @@ export function LayerControls({ layer }: { layer: Layer }) {
           />
           <button
             type="submit"
-            className="min-h-touch rounded-lg bg-accent px-4 text-sm font-semibold text-bg disabled:opacity-50"
+            className="min-h-touch rounded-lg bg-accent px-4 text-sm font-semibold text-on-accent disabled:opacity-50"
             disabled={!instruction.trim() || actions.redirect.isPending}
           >
             Send

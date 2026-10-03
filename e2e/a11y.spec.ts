@@ -3,8 +3,6 @@ import { expect, test } from './fixtures';
 
 const routes = [
   '/',
-  '/?tab=layers',
-  '/?tab=approvals',
   '/approvals',
   '/briefing',
   '/log',
