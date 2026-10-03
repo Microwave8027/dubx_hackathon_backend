@@ -4,15 +4,13 @@ import './widget.css';
 import { SUN_BOX, orbitSeconds, progressArc, ringRadius, startAngle } from './layout';
 import {
   MAX_PLANETS,
-  PLANET_COLOR_VAR,
+  ORB,
+  attentionCount,
   planetStatusText,
   planetStepText,
   type Planet,
   type PlanetSelection,
 } from './planets';
-
-const RAYS = 12;
-const BODY = 30;
 
 export interface WidgetCanvasProps {
   selection: PlanetSelection;
@@ -30,57 +28,38 @@ export interface WidgetCanvasProps {
 
 type Vars = CSSProperties & Record<`--${string}`, string | number>;
 
-function Ray({ i }: { i: number }) {
-  const angle = (i / RAYS) * 360;
-  return (
-    <line
-      className="wg-ray"
-      x1={SUN_BOX / 2}
-      y1={SUN_BOX / 2 - BODY - 4}
-      x2={SUN_BOX / 2}
-      y2={SUN_BOX / 2 - BODY - 11}
-      stroke="currentColor"
-      strokeWidth={3}
-      strokeLinecap="round"
-      transform={`rotate(${angle} ${SUN_BOX / 2} ${SUN_BOX / 2})`}
-      style={{ '--i': i } as Vars}
-    />
-  );
-}
-
 function Sun({
   pendingCount,
   onClick,
   onHover,
 }: Pick<WidgetCanvasProps, 'pendingCount' | 'onHover'> & { onClick(): void }) {
-  const gradientId = `wg-glow-${useId().replace(/:/g, '')}`;
+  const gradientId = `wg-orb-${useId().replace(/:/g, '')}`;
   return (
     <button
       type="button"
       tabIndex={-1}
       aria-label="Open Command Center"
-      className="wg-sun wg-sun-color"
+      className="wg-sun"
       onClick={onClick}
       onPointerEnter={() => onHover(null)}
     >
       <svg width={SUN_BOX} height={SUN_BOX} viewBox={`0 0 ${SUN_BOX} ${SUN_BOX}`} aria-hidden>
         <defs>
           <radialGradient id={gradientId}>
-            <stop offset="55%" stopColor="currentColor" stopOpacity="0.5" />
-            <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
+            <stop offset="0%" stopColor={ORB.core} />
+            <stop offset="45%" stopColor={ORB.mid} />
+            <stop offset="76%" stopColor={ORB.edge} />
+            <stop offset="88%" stopColor={ORB.edge} stopOpacity="0.55" />
+            <stop offset="100%" stopColor={ORB.edge} stopOpacity="0" />
           </radialGradient>
         </defs>
         <circle
-          className="wg-glow"
+          className="wg-orb"
           cx={SUN_BOX / 2}
           cy={SUN_BOX / 2}
           r={SUN_BOX / 2}
           fill={`url(#${gradientId})`}
         />
-        {Array.from({ length: RAYS }, (_, i) => (
-          <Ray key={i} i={i} />
-        ))}
-        <circle cx={SUN_BOX / 2} cy={SUN_BOX / 2} r={BODY} fill="currentColor" />
       </svg>
       {pendingCount > 0 && (
         <span className="wg-badge" aria-label={`${pendingCount} waiting for approval`}>
@@ -131,7 +110,7 @@ function PlanetButton({
             data-testid="planet"
             data-status={planet.status}
             className="wg-planet"
-            style={{ color: `rgb(var(${PLANET_COLOR_VAR[planet.status]}))`, '--i': index } as Vars}
+            style={{ color: ORB.edge, '--i': index } as Vars}
             onPointerEnter={() => onHover(planet.id)}
             onPointerLeave={() => onHover(null)}
             onClick={onClick}
@@ -243,7 +222,11 @@ export function WidgetCanvas(props: WidgetCanvasProps) {
           )}
         </div>
         {/* The sun is first so planets always sit above it. */}
-        <Sun pendingCount={props.pendingCount} onClick={props.onSun} onHover={props.onHover} />
+        <Sun
+          pendingCount={attentionCount(props.pendingCount, selection)}
+          onClick={props.onSun}
+          onHover={props.onHover}
+        />
         {selection.planets.map((p, i) => (
           <PlanetButton
             key={p.id}

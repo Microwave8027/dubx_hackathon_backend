@@ -127,19 +127,20 @@ export function sunState(data: WidgetData): TrayState {
   return 'idle';
 }
 
-/** Existing status tokens (src/index.css): idle slate, working blue, needs-you amber. */
-export const SUN_COLOR_VAR: Record<TrayState, string> = {
-  idle: '--status-idle',
-  working: '--status-working',
-  'needs-you': '--status-needs',
-};
+/**
+ * The widget never changes colour with state. Only attention changes how it looks: it flashes and
+ * shows a number. One fixed palette, matching the red-to-orange orb.
+ */
+export const ORB = { core: '#e8281a', mid: '#f0502a', edge: '#ffa132' } as const;
 
-export const PLANET_COLOR_VAR: Record<PlanetStatus, string> = {
-  starting: '--status-working',
-  running: '--status-working',
-  paused: '--status-idle',
-  waiting_approval: '--status-needs',
-};
+/** True when the widget should flash and show a count. */
+export const needsAttention = (state: TrayState): boolean => state === 'needs-you';
+
+/** The number to show: pending approvals, or waiting planets if the approvals have not arrived. */
+export function attentionCount(pendingApprovals: number, selection: PlanetSelection): number {
+  if (pendingApprovals > 0) return pendingApprovals;
+  return selection.planets.filter((p) => p.status === 'waiting_approval').length;
+}
 
 /** A planet opens its layer, or the approval when it is waiting on one. */
 export function planetTarget(planet: Planet): WidgetTarget {

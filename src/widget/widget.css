@@ -51,59 +51,34 @@
 .wg-empty .wg-sun {
   opacity: 0.55;
 }
-.wg-sun-color {
-  color: rgb(var(--status-idle));
-}
-.wg-state-working .wg-sun-color {
-  color: rgb(var(--status-working));
-}
-.wg-state-needs-you .wg-sun-color {
-  color: rgb(var(--status-needs));
-}
-
+/* The attention number sits on the orb, just above the flat edge so the half sun shows it too. */
 .wg-badge {
   position: absolute;
-  right: 4px;
-  top: 4px;
-  min-width: 20px;
-  padding: 1px 5px;
-  border-radius: 999px;
-  background: rgb(var(--surface));
-  color: rgb(var(--ink));
-  border: 1px solid rgb(var(--line));
+  left: 0;
+  right: 0;
+  top: 14px;
+  text-align: center;
+  color: #fff;
+  text-shadow: 0 1px 3px rgb(120 20 0 / 0.7);
   font:
-    600 12px/16px ui-sans-serif,
+    700 22px/26px ui-sans-serif,
     system-ui,
     sans-serif;
-  text-align: center;
   pointer-events: none;
 }
 
-/* Slow pulse when the agent needs you. */
-.wg-state-needs-you .wg-glow {
-  animation: wg-pulse 3.2s ease-in-out infinite;
+/* Colour never changes. When something needs you, the orb and its number flash. */
+.wg-state-needs-you .wg-orb,
+.wg-state-needs-you .wg-badge {
+  animation: wg-flash 1.2s ease-in-out infinite;
 }
-/* Rays shimmer slowly while working. */
-.wg-state-working .wg-ray {
-  animation: wg-shimmer 3.6s ease-in-out infinite;
-  animation-delay: calc(var(--i) * -0.3s);
-}
-@keyframes wg-pulse {
+@keyframes wg-flash {
   0%,
   100% {
     opacity: 1;
   }
   50% {
-    opacity: 0.45;
-  }
-}
-@keyframes wg-shimmer {
-  0%,
-  100% {
-    opacity: 0.35;
-  }
-  50% {
-    opacity: 1;
+    opacity: 0.3;
   }
 }
 
@@ -190,13 +165,13 @@
 }
 .wg-planet-wait {
   fill: none;
-  stroke: rgb(var(--status-needs));
+  stroke: #e8281a;
   stroke-width: 2.5;
-  animation: wg-pulse 2.4s ease-in-out infinite;
+  animation: wg-flash 1.2s ease-in-out infinite;
 }
 .wg-planet-more {
-  fill: rgb(var(--surface));
-  stroke: rgb(var(--line));
+  fill: #fff;
+  stroke: #ffa132;
 }
 .wg-planet-more-text {
   fill: rgb(var(--ink));
@@ -251,8 +226,8 @@
   animation: none;
   transform: rotate(calc(var(--phase) * -360deg));
 }
-.wg-static .wg-glow,
-.wg-static .wg-ray,
+.wg-static .wg-orb,
+.wg-static .wg-badge,
 .wg-static .wg-planet-wait {
   animation: none;
 }

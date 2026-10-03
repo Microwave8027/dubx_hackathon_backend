@@ -1,9 +1,10 @@
 import type { Approval, Layer, Step, Task } from '@/api/types';
 import {
   MAX_PLANETS,
-  PLANET_COLOR_VAR,
+  ORB,
+  attentionCount,
+  needsAttention,
   PLANET_RADIUS,
-  SUN_COLOR_VAR,
   progressOf,
   planetStatusText,
   planetStepText,
@@ -234,19 +235,19 @@ describe('sunState', () => {
   });
 });
 
-describe('color tokens', () => {
-  it('maps overall state to the existing status tokens', () => {
-    expect(SUN_COLOR_VAR).toEqual({
-      idle: '--status-idle',
-      working: '--status-working',
-      'needs-you': '--status-needs',
-    });
+describe('attention', () => {
+  it('only needs-you asks for attention; the palette is fixed', () => {
+    expect(needsAttention('needs-you')).toBe(true);
+    expect(needsAttention('working')).toBe(false);
+    expect(needsAttention('idle')).toBe(false);
+    expect(Object.values(ORB)).toHaveLength(3);
   });
 
-  it('maps planet status to the same palette', () => {
-    expect(PLANET_COLOR_VAR.running).toBe('--status-working');
-    expect(PLANET_COLOR_VAR.waiting_approval).toBe('--status-needs');
-    expect(PLANET_COLOR_VAR.paused).toBe('--status-idle');
+  it('counts pending approvals, else waiting planets', () => {
+    const waiting = selectPlanets(data([task('1')], [layer('1', { status: 'waiting_approval' })]));
+    expect(attentionCount(3, waiting)).toBe(3);
+    expect(attentionCount(0, waiting)).toBe(1);
+    expect(attentionCount(0, selectPlanets(data([], [])))).toBe(0);
   });
 });
 

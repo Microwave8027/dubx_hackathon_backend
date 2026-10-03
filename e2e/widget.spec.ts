@@ -182,6 +182,32 @@ test.describe('widget preview', () => {
     }
   });
 
+  test('the orb never changes colour; only attention flashes it and shows a number', async ({
+    app,
+  }) => {
+    await app.goto('/widget-preview');
+    const win = app.getByTestId('widget-window');
+    const orb = win.locator('.wg-orb');
+    const core = win.locator('radialGradient stop').first();
+    const badge = win.locator('.wg-badge');
+
+    // Default data has an approval waiting: flashing, with the number.
+    await expect(core).toHaveAttribute('stop-color', '#e8281a');
+    await expect(orb).toHaveCSS('animation-name', 'wg-flash');
+    await expect(badge).toHaveText('1');
+
+    // Nothing waiting (a running-only set): same colour, no flash, no number.
+    await app.getByRole('button', { name: 'Clear tasks' }).click();
+    for (let i = 0; i < 3; i++) await app.getByRole('button', { name: 'Add task' }).click();
+    await expect(win.getByTestId('widget-canvas')).toHaveAttribute('data-state', 'working');
+    await expect(core).toHaveAttribute('stop-color', '#e8281a');
+    await expect(orb).toHaveCSS('animation-name', 'none');
+    await expect(badge).toHaveCount(0);
+
+    await app.getByRole('button', { name: 'Clear tasks' }).click();
+    await expect(core).toHaveAttribute('stop-color', '#e8281a');
+  });
+
   test('both sizes are drawn for design review', async ({ app }) => {
     await app.goto('/widget-preview');
     await expect(app.getByTestId('widget-ref-collapsed')).toBeVisible();
