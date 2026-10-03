@@ -2,7 +2,7 @@ import { createBrowserPlatform } from './browser';
 import { createTauriPlatform } from './tauri';
 import type { Platform } from './types';
 
-export type { NotifyOptions, Platform, TrayState } from './types';
+export type { NotifyOptions, Platform, TrayState, WidgetSupport, WidgetTarget } from './types';
 export { invokeCommand } from './invoke';
 export { onPlatformEvent, emitPlatformEvent, type PlatformEvent } from './events';
 

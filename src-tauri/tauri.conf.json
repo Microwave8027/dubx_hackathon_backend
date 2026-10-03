@@ -18,9 +18,31 @@
         "height": 800,
         "minWidth": 360,
         "minHeight": 480
+      },
+      {
+        "label": "widget",
+        "title": "Command Center Widget",
+        "url": "/widget",
+        "width": 96,
+        "height": 48,
+        "decorations": false,
+        "transparent": true,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "shadow": false,
+        "resizable": false,
+        "maximizable": false,
+        "minimizable": false,
+        "closable": false,
+        "visible": false,
+        "focus": false,
+        "focusable": false
       }
     ],
-    "security": { "csp": null }
+    "security": {
+      "csp": null
+    },
+    "macOSPrivateApi": true
   },
   "bundle": {
     "active": true,

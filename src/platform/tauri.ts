@@ -10,6 +10,11 @@ import idleIcon from '@/assets/tray/idle.png?url';
 import workingIcon from '@/assets/tray/working.png?url';
 import needsYouIcon from '@/assets/tray/needs-you.png?url';
 import { emitPlatformEvent } from './events';
+import {
+  createMainWindowWidgetMethods,
+  createWidgetWindowMethods,
+  installMainWindowBridge,
+} from './widget';
 import type { NotifyOptions, Platform, TrayState } from './types';
 
 const TRAY_ID = 'command-center';
@@ -29,11 +34,14 @@ async function loadIcon(state: TrayState): Promise<Uint8Array> {
   return new Uint8Array(await res.arrayBuffer());
 }
 
+let broadcastMainVisibility: () => void = () => {};
+
 async function showWindow(): Promise<void> {
   const win = getCurrentWindow();
   await win.show();
   await win.unminimize();
   await win.setFocus();
+  broadcastMainVisibility();
 }
 
 let tray: TrayIcon | null = null;
@@ -80,6 +88,7 @@ function installCloseToTray(): void {
   void getCurrentWindow().onCloseRequested(async (event) => {
     event.preventDefault();
     await getCurrentWindow().hide();
+    broadcastMainVisibility();
   });
 }
 
@@ -113,9 +122,16 @@ async function ensurePermission(): Promise<boolean> {
 }
 
 export function createTauriPlatform(): Platform {
-  installCloseToTray();
-  installFocusWatch();
+  // The widget webview shares this adapter but must not get tray, close-to-tray or focus handling.
+  const isMain = getCurrentWindow().label === 'main';
+  if (isMain) {
+    installCloseToTray();
+    installFocusWatch();
+    broadcastMainVisibility = installMainWindowBridge(showWindow).broadcast;
+  }
+  const widgetMethods = isMain ? createMainWindowWidgetMethods() : createWidgetWindowMethods();
   return {
+    ...widgetMethods,
     kind: 'tauri',
     isDesktop: () => true,
     async notify({ title, body, deepLink }: NotifyOptions) {

@@ -2,6 +2,7 @@ import { act, render, screen } from '@testing-library/react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { vi } from 'vitest';
 import { approval, layer } from '@/test/fixtures';
+import { createFakePlatform } from '@/test/fakePlatform';
 import { emitPlatformEvent, setPlatformForTests, type Platform } from '@/platform';
 import { useLiveStore } from '@/state/store';
 import { PlatformBridge } from './PlatformBridge';
@@ -10,13 +11,7 @@ const pauseLayer = vi.fn();
 vi.mock('@/api/client', () => ({ api: { pauseLayer: (id: string) => pauseLayer(id) } }));
 
 const setTrayState = vi.fn().mockResolvedValue(undefined);
-const platform: Platform = {
-  kind: 'tauri',
-  isDesktop: () => true,
-  notify: vi.fn(),
-  setTrayState,
-  showWindow: vi.fn(),
-};
+const platform: Platform = createFakePlatform({ setTrayState });
 
 function Where() {
   return <span data-testid="path">{useLocation().pathname}</span>;

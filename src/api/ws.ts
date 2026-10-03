@@ -10,6 +10,8 @@ export interface WsClientOptions {
   onState(state: ConnectionState): void;
   /** Called after every successful (re)connect so callers can refetch everything. */
   onConnected(isReconnect: boolean): void;
+  /** Only these event types are validated and delivered; others are dropped before Zod runs. */
+  acceptTypes?: readonly ServerEvent['type'][];
   minDelayMs?: number;
   maxDelayMs?: number;
 }
@@ -17,6 +19,11 @@ export interface WsClientOptions {
 export interface WsClient {
   start(): void;
   stop(): void;
+}
+
+function acceptsType(raw: unknown, types: readonly string[]): boolean {
+  const type = (raw as { type?: unknown } | null)?.type;
+  return typeof type === 'string' && types.includes(type);
 }
 
 export function createWsClient(opts: WsClientOptions): WsClient {
@@ -59,6 +66,7 @@ export function createWsClient(opts: WsClientOptions): WsClient {
           } catch {
             return;
           }
+          if (opts.acceptTypes && !acceptsType(raw, opts.acceptTypes)) return;
           const parsed = ServerEventSchema.safeParse(raw);
           // Unknown or malformed events are dropped rather than trusted.
           if (parsed.success) opts.onEvent(parsed.data);

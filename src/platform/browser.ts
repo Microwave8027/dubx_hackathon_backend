@@ -1,4 +1,5 @@
 import { emitPlatformEvent } from './events';
+import { targetPath } from '@/widget/messages';
 import type { NotifyOptions, Platform } from './types';
 
 export function createBrowserPlatform(): Platform {
@@ -22,6 +23,24 @@ export function createBrowserPlatform(): Platform {
     async setTrayState() {},
     async showWindow() {
       window.focus();
+    },
+    // The widget is a desktop window; a browser has none.
+    async widgetSupport() {
+      return { supported: false, reason: 'The widget is part of the desktop app.' };
+    },
+    async showWidget() {},
+    async hideWidget() {},
+    async setWidgetExpanded() {},
+    async openCommandCenter(target) {
+      window.focus();
+      emitPlatformEvent({ type: 'deep-link', path: targetPath(target) });
+    },
+    async watchMainWindow() {
+      return () => {};
+    },
+    async publishWidgetSettings() {},
+    async watchWidgetSettings() {
+      return () => {};
     },
   };
 }

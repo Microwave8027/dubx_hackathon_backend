@@ -8,7 +8,7 @@ interface FakeConn {
   closed: boolean;
 }
 
-function setup() {
+function setup(acceptTypes?: ServerEvent['type'][]) {
   const conns: FakeConn[] = [];
   const events: ServerEvent[] = [];
   const states: ConnectionState[] = [];
@@ -31,6 +31,7 @@ function setup() {
     onEvent: (e) => events.push(e),
     onState: (s) => states.push(s),
     onConnected: (r) => connected.push(r),
+    acceptTypes,
   });
   return { client, conns, events, states, connected };
 }
@@ -50,6 +51,19 @@ describe('ws client', () => {
     h.onMessage(JSON.stringify({ type: 'nope', data: {} }));
     expect(events).toHaveLength(1);
     expect(events[0]?.type).toBe('layer.updated');
+  });
+
+  it('delivers only accepted types when acceptTypes is set', () => {
+    const { client, conns, events } = setup(['layer.updated']);
+    client.start();
+    const h = conns[0]!.handlers;
+    h.onOpen();
+    h.onMessage(
+      JSON.stringify({ type: 'layer.frame', data: { layerId: 'l', ts: 1, jpegBase64: 'AAAA' } }),
+    );
+    h.onMessage(JSON.stringify({ type: 'layer.updated', data: layer() }));
+    h.onMessage('null');
+    expect(events.map((e) => e.type)).toEqual(['layer.updated']);
   });
 
   it('reconnects with backoff 1s to 15s and flags reconnects', () => {

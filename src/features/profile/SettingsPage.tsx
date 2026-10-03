@@ -9,6 +9,7 @@ import { BriefingTimeField } from './BriefingTimeField';
 import { ConnectionSection } from './ConnectionSection';
 import { PeakWindowsEditor } from './PeakWindowsEditor';
 import { TiersEditor } from './TiersEditor';
+import { WidgetSection } from './WidgetSection';
 import { chronotypeLabel } from './chronotype';
 import { sanitizeProfile } from './defaults';
 import { hasErrors, validateProfile } from './validate';
@@ -95,6 +96,15 @@ function ProfileForm({ initial }: { initial: Profile }) {
           ))}
         </div>
       </Section>
+
+      {detectTauri() && (
+        <Section
+          title="Desktop widget"
+          hint="A small sun in the corner of your screen while the Command Center window is closed. Saved on this computer."
+        >
+          <WidgetSection />
+        </Section>
+      )}
 
       {!detectTauri() && (
         <Section title="Notifications">
