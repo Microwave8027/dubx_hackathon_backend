@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { useShallow } from 'zustand/react/shallow';
 import type { Approval, Layer, ServerEvent, Task } from '@/api/types';
 import type { ConnectionState } from '@/api/ws';
 import { pushFrame } from './frameStore';
@@ -75,3 +76,7 @@ export const selectPendingApprovals = (s: LiveState): Approval[] =>
 
 export const selectPendingCount = (s: LiveState): number =>
   Object.values(s.approvals).filter((a) => a.status === 'pending').length;
+
+/** Stable-reference hook: re-renders only when the set of pending approvals changes. */
+export const usePendingApprovals = (): Approval[] =>
+  useLiveStore(useShallow(selectPendingApprovals));

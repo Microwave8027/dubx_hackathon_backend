@@ -1,4 +1,6 @@
+import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useLiveStore } from '@/state/store';
 import { api } from './client';
 import type { LogFilter } from './types';
 
@@ -11,11 +13,28 @@ export const queryKeys = {
   briefing: ['briefing'] as const,
 };
 
-export const useTasksQuery = () => useQuery({ queryKey: queryKeys.tasks, queryFn: api.listTasks });
-export const useLayersQuery = () =>
-  useQuery({ queryKey: queryKeys.layers, queryFn: api.listLayers });
-export const useApprovalsQuery = () =>
-  useQuery({ queryKey: queryKeys.approvals, queryFn: api.listApprovals });
+// REST results hydrate the live store, so the UI works even before the WebSocket connects.
+export function useTasksQuery() {
+  const q = useQuery({ queryKey: queryKeys.tasks, queryFn: api.listTasks });
+  useEffect(() => {
+    if (q.data) useLiveStore.getState().hydrate({ tasks: q.data });
+  }, [q.data]);
+  return q;
+}
+export function useLayersQuery() {
+  const q = useQuery({ queryKey: queryKeys.layers, queryFn: api.listLayers });
+  useEffect(() => {
+    if (q.data) useLiveStore.getState().hydrate({ layers: q.data });
+  }, [q.data]);
+  return q;
+}
+export function useApprovalsQuery() {
+  const q = useQuery({ queryKey: queryKeys.approvals, queryFn: api.listApprovals });
+  useEffect(() => {
+    if (q.data) useLiveStore.getState().hydrate({ approvals: q.data });
+  }, [q.data]);
+  return q;
+}
 export const useProfileQuery = () =>
   useQuery({ queryKey: queryKeys.profile, queryFn: api.getProfile });
 export const useLogQuery = (filter: LogFilter = {}) =>

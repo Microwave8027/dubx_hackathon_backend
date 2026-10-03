@@ -1,15 +1,15 @@
 import { createBrowserRouter, type RouteObject } from 'react-router-dom';
 import { AppShell } from '@/components/AppShell';
 import { Placeholder } from '@/components/Placeholder';
+import { Dashboard } from '@/features/Dashboard';
+import { More } from '@/features/More';
 
 export const routes: RouteObject[] = [
   {
     element: <AppShell />,
     children: [
-      {
-        index: true,
-        element: <Placeholder title="Dashboard" note="Tasks, layers and approvals." />,
-      },
+      { index: true, element: <Dashboard /> },
+      { path: 'more', element: <More /> },
       {
         path: 'layers/:layerId',
         element: <Placeholder title="Layer" note="Live preview, steps and log." />,

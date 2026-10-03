@@ -92,3 +92,16 @@ describe('ws client', () => {
     expect(states.at(-1)).toBe('closed');
   });
 });
+
+describe('ws client stop while connecting', () => {
+  it('defers closing until the socket opens', () => {
+    const { client } = setup();
+    client.start();
+    const s = FakeSocket.instances[0]!;
+    (s as unknown as { readyState: number }).readyState = 0;
+    client.stop();
+    expect(s.closed).toBe(false);
+    s.onopen?.();
+    expect(s.closed).toBe(true);
+  });
+});

@@ -92,7 +92,12 @@ export function createWsClient(opts: WsClientOptions): WsClient {
       socket = null;
       if (s) {
         s.onclose = null;
-        s.close();
+        s.onerror = null;
+        s.onmessage = null;
+        // Closing a still-connecting socket logs a browser warning (StrictMode mounts twice),
+        // so wait for it to open first.
+        if (s.readyState === 0) s.onopen = () => s.close();
+        else s.close();
       }
       opts.onState('closed');
     },
