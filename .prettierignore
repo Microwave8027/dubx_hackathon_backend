@@ -3,3 +3,5 @@ node_modules
 pnpm-lock.yaml
 src-tauri
 README.md
+design-export/DESIGN.md
+design-export/screens
