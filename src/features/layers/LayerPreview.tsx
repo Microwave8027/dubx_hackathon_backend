@@ -28,7 +28,8 @@ export function LayerPreview({ layer }: { layer: Layer }) {
           role="status"
           className="absolute inset-0 flex items-center justify-center bg-bg/40 text-sm font-medium"
         >
-          {noSignalLabel(layer)}
+          {/* Solid chip: the label stays readable over any video frame. */}
+          <span className="rounded-full bg-surface px-3 py-1 text-ink">{noSignalLabel(layer)}</span>
         </div>
       )}
     </div>

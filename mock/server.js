@@ -6,11 +6,13 @@ import { generateKeyPairSync } from 'node:crypto';
 import { WebSocketServer } from 'ws';
 import { ACTION_CATEGORIES, SCRIPTS, createState, id, now } from './state.js';
 import { contextScreenshotSvg, makeFrame } from './frames.js';
+import { buildSchedule } from './schedule.js';
 
 const PORT = Number(process.env.MOCK_PORT ?? 8787);
 const STEP_MS = Number(process.env.MOCK_STEP_MS ?? 6000);
 const APPROVAL_EVERY_MS = Number(process.env.MOCK_APPROVAL_MS ?? 30000);
 const FRAME_MS = 500;
+const CALENDAR_PUSH_MS = Number(process.env.MOCK_CALENDAR_MS ?? 20000);
 
 // A throwaway P-256 key so the browser's pushManager.subscribe() accepts the key in dev.
 // The mock never sends pushes. Override with MOCK_VAPID_PUBLIC_KEY.
@@ -32,6 +34,7 @@ export function createMock({ autoStart = true } = {}) {
   const server = createServer(app);
   const wss = new WebSocketServer({ server, path: '/events' });
   const runtime = new Map(); // layerId -> { script, stepIndex, timer, tick }
+  const calendar = { mode: 'default', pushed: 0, tick: 0 };
   const timers = [];
 
   app.use((req, res, next) => {
@@ -390,12 +393,31 @@ export function createMock({ autoStart = true } = {}) {
     });
   });
 
+  // Calendar: the whole window, in the shape documented in docs/calendar-payload.md.
+  // from/to are accepted but ignored on purpose: the client must filter to the visible range.
+  app.get('/schedule', (_req, res) => res.json(buildSchedule(calendar.mode, Date.now(), 0)));
+
   // Mock-only helpers
   app.post('/__mock/demo', (_req, res) => {
     reset();
     seedDefaults();
     res.json({ ok: true });
   });
+  // mode: default | full | bad (messy payload with cancelled and invalid events)
+  app.post('/__mock/calendar', (req, res) => {
+    const mode = String(req.query.mode ?? 'default');
+    if (!['default', 'full', 'bad'].includes(mode))
+      return res.status(400).json({ error: 'bad_mode' });
+    calendar.mode = mode;
+    broadcast('calendar.updated', undefined);
+    res.json({ ok: true, mode });
+  });
+  // type: snapshot (carries the payload) | updated (no payload, clients refetch)
+  app.post('/__mock/calendar/push', (req, res) => {
+    pushCalendar(String(req.query.type ?? 'snapshot'));
+    res.json({ ok: true });
+  });
+
   // Raises an approval on a running layer right now (used by tests).
   app.post('/__mock/approval', (_req, res) => {
     randomApproval();
@@ -407,12 +429,20 @@ export function createMock({ autoStart = true } = {}) {
     res.json({ ok: true });
   });
 
+  function pushCalendar(type) {
+    if (type === 'updated') return broadcast('calendar.updated', undefined);
+    calendar.pushed += 1;
+    broadcast('calendar.snapshot', buildSchedule(calendar.mode, Date.now(), calendar.pushed));
+  }
+
   function reset() {
     state.tasks.clear();
     state.layers.clear();
     state.approvals.clear();
     state.log.length = 0;
     runtime.clear();
+    calendar.mode = 'default';
+    calendar.pushed = 0;
   }
 
   wss.on('connection', (ws) => {
@@ -431,6 +461,13 @@ export function createMock({ autoStart = true } = {}) {
             timers.push(setInterval(tickLoop, STEP_MS));
             timers.push(setInterval(frameLoop, FRAME_MS));
             timers.push(setInterval(randomApproval, APPROVAL_EVERY_MS));
+            // Exercise both calendar paths: a snapshot with a payload, then an update without.
+            timers.push(
+              setInterval(
+                () => pushCalendar(calendar.tick++ % 2 === 0 ? 'snapshot' : 'updated'),
+                CALENDAR_PUSH_MS,
+              ),
+            );
           }
           resolve(PORT);
         });

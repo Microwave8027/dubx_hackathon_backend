@@ -124,6 +124,9 @@ export const ServerEventSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('approval.requested'), data: ApprovalSchema }),
   z.object({ type: z.literal('approval.resolved'), data: ApprovalSchema }),
   z.object({ type: z.literal('briefing.ready'), data: BriefingSchema }),
+  // The calendar payload is deliberately opaque here; src/calendar/normalize.ts owns its shape.
+  z.object({ type: z.literal('calendar.snapshot'), data: z.unknown() }),
+  z.object({ type: z.literal('calendar.updated'), data: z.unknown().optional() }),
 ]);
 
 export const TasksSchema = z.array(TaskSchema);

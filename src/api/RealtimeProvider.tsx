@@ -4,6 +4,8 @@ import { useLiveStore } from '@/state/store';
 import { api } from './client';
 import { getTransport } from '@/transport';
 import { queryKeys } from './queries';
+import { CALENDAR_KEY } from '@/calendar/useCalendar';
+import { handleCalendarEvent } from '@/calendar/events';
 import { notifyForEvent } from '@/notifications/notifyEvents';
 import { createWsClient } from './ws';
 
@@ -31,6 +33,7 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
       store.hydrate({ tasks, layers, approvals });
       void queryClient.invalidateQueries({ queryKey: ['log'] });
       void queryClient.invalidateQueries({ queryKey: queryKeys.briefing });
+      void queryClient.invalidateQueries({ queryKey: CALENDAR_KEY });
     }
 
     const client = createWsClient({
@@ -43,6 +46,7 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
         if (event.type === 'briefing.ready') {
           void queryClient.invalidateQueries({ queryKey: queryKeys.briefing });
         }
+        handleCalendarEvent(event, queryClient);
         if (event.type === 'approval.resolved' || event.type === 'layer.updated') {
           void queryClient.invalidateQueries({ queryKey: ['log'] });
         }

@@ -3,6 +3,7 @@ import { createTauriPlatform } from './tauri';
 import type { Platform } from './types';
 
 export type { NotifyOptions, Platform, TrayState } from './types';
+export { invokeCommand } from './invoke';
 export { onPlatformEvent, emitPlatformEvent, type PlatformEvent } from './events';
 
 export function detectTauri(): boolean {
