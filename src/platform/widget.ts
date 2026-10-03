@@ -96,16 +96,17 @@ export function createWidgetWindowMethods(): WidgetMethods {
   };
 }
 
-const DEBOUNCE_MS = 150;
-
 /**
  * Main-window side: tells the widget whether the window is visible and follows "open" commands.
  * Tauri has no hidden/shown window event, so callers also call `broadcast` after show and hide.
+ * No timers here: a hidden or minimized webview does not run them. The Rust side also checks the
+ * window once a second (src-tauri/src/lib.rs) as a backstop for changes no event reports.
  */
 export function installMainWindowBridge(showWindow: () => Promise<void>): { broadcast(): void } {
   const win = getCurrentWindow();
   let last: boolean | null = null;
-  let timer: ReturnType<typeof setTimeout> | null = null;
+  let running = false;
+  let again = false;
 
   async function send(force: boolean) {
     const visible = (await win.isVisible()) && !(await win.isMinimized());
@@ -113,16 +114,26 @@ export function installMainWindowBridge(showWindow: () => Promise<void>): { broa
     last = visible;
     await emitTo('widget', WIDGET_MAIN_VISIBILITY_EVENT, { visible });
   }
+  // Coalesce bursts (a resize fires many events): one check at a time, one more if asked meanwhile.
   const broadcast = () => {
-    void send(false).catch(() => {});
-  };
-  const debounced = () => {
-    if (timer) clearTimeout(timer);
-    timer = setTimeout(broadcast, DEBOUNCE_MS);
+    if (running) {
+      again = true;
+      return;
+    }
+    running = true;
+    send(false)
+      .catch(() => {})
+      .finally(() => {
+        running = false;
+        if (again) {
+          again = false;
+          broadcast();
+        }
+      });
   };
 
-  void win.onFocusChanged(debounced);
-  void win.onResized(debounced);
+  void win.onFocusChanged(broadcast);
+  void win.onResized(broadcast);
   void listen(WIDGET_REQUEST_VISIBILITY_EVENT, () => void send(true).catch(() => {}));
   void listen(WIDGET_OPEN_EVENT, (e) => {
     const parsed = OpenPayloadSchema.safeParse(e.payload);
