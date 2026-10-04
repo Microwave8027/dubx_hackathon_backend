@@ -6,35 +6,37 @@ apps and open the new block's apps.
 
 ## Run
 
-The app only works against a running backend, which normally runs in Docker:
+The app talks to the Dubx backend, which can be a deployment on Vercel or a local Docker stack.
 
-1. **Start Docker Desktop.** The first time (and whenever the backend code changes), start the
-   stack from `dubx_backend/` with `docker compose up -d --build`. After that, the containers start
-   on their own whenever Docker Desktop opens (`restart: unless-stopped`).
-2. **Run the app:**
+```bash
+cd desktop
+bun install
+bun run tauri dev      # dev build with hot reload
+DUBX_BACKEND_URL=https://<your-domain> bun run tauri build   # installer in src-tauri/target/release/bundle/
+```
 
-   ```bash
-   cd desktop
-   bun install
-   bun run tauri dev      # dev build with hot reload
-   bun run tauri build    # installer in src-tauri/target/release/bundle/
-   ```
+`DUBX_BACKEND_URL` is baked in as the default backend (without it the default is
+`http://localhost:3000`). Users can change it under **Server settings**. See the backend README
+for deploying to Vercel.
 
-Prerequisites: [Bun](https://bun.sh), Rust (MSVC toolchain on Windows), WebView2 (preinstalled on
-Windows 11), and Docker Desktop.
+**Local backend:** start Docker Desktop, then `docker compose up -d --build` from `dubx_backend/`
+once (the containers come back on their own afterwards), then run the app.
 
-Until `GET /health` on the backend (default `http://localhost:3000`; change it under **Server
-settings**) answers with the API version this app needs, the app shows a screen for the specific
-problem and re-checks every 3 seconds:
+Prerequisites: [Bun](https://bun.sh), Rust (MSVC toolchain on Windows) and WebView2 (preinstalled
+on Windows 11).
+
+Until `GET /health` on the backend answers with the API version this app needs, the app shows a
+screen for the specific problem and re-checks every 3 seconds:
 
 | Problem | Screen |
 | ------- | ------ |
-| Docker Desktop isn't running | **Open Docker Desktop** button |
-| Docker is running but the backend doesn't answer | `docker compose up -d` |
-| The container runs an old image (no desktop API) | `docker compose up -d --build` |
+| Local backend, and Docker Desktop isn't running | **Open Docker Desktop** button |
+| Local backend, Docker is running but it doesn't answer | `docker compose up -d` |
+| The backend is older than this app expects | Local: `docker compose up -d --build`. Remote: redeploy. |
+| A remote backend doesn't answer | "Can't reach <url>. Check that the server is running." |
 
-The same screen comes back whenever a request or the reminder stream can't connect (for example,
-if Docker is stopped while the app is open), and the app continues once the backend is up.
+The same screen comes back whenever a request or the reminder poll can't connect, and the app
+continues once the backend is up.
 
 ## How it works
 
@@ -43,7 +45,7 @@ if Docker is stopped while the app is open), and the app continues once the back
 | Sign-in: opens Google login in the system browser, receives a one-time code on a `127.0.0.1` loopback port, exchanges it with a PKCE verifier for a bearer token. Google blocks OAuth inside embedded webviews, so the login can't happen in the app window. | `src-tauri/src/auth.rs` |
 | Token storage: Windows Credential Manager (Keychain / keyutils elsewhere), one entry per backend URL | `auth.rs` |
 | Backend calls: the UI calls the `api` command; Rust adds the token, so it never reaches JavaScript. A 401 signs the app out. | `src-tauri/src/api.rs` |
-| Reminders: listens to `GET /blocks/stream` (SSE), reconnects with backoff, shows a native notification, and raises the window for prompts that need an answer | `src-tauri/src/stream.rs` |
+| Reminders: polls `GET /blocks/due` every 10s (works on serverless hosting), backs off when the backend is unreachable, shows a native notification, and raises the window for prompts that need an answer | `src-tauri/src/stream.rs` |
 | Window snapshot: xcap lists windows; sysinfo adds exe paths; Win32 adds AppUserModelIDs for Store apps, restore geometry, and filters shell windows | `src-tauri/src/desktop/` |
 | Closing: graceful `WM_CLOSE` on Windows (apps can still ask to save), `SIGTERM` elsewhere | `desktop/win32.rs` |
 | Launching: exe path, or `shell:AppsFolder\<AUMID>` for Store/MSIX apps; new windows are moved back to their saved position with `SetWindowPlacement` | `desktop/mod.rs` |
@@ -53,10 +55,10 @@ if Docker is stopped while the app is open), and the app continues once the back
 
 1. **Sync.** On start, every 10 minutes, after any edit, and from the tray, the app calls
    `POST /blocks/sync` for today through 14 days ahead. New calendar events get an empty window group.
-2. **Coming up** (`block_upcoming`, 5 minutes before by default). If the block has no windows, the
+2. **Coming up** (`upcoming`, 5 minutes before by default). If the block has no windows, the
    app takes a snapshot of every open app (name, title, PID, exe) and asks which ones belong to the
    block. The ones you tick are saved with `PUT /blocks/:id/windows`.
-3. **Starting** (`block_started`). A native notification appears and the app asks to switch:
+3. **Starting** (`started`). A native notification appears and the app asks to switch:
    - **Close:** open windows that match the previous workspace's saved apps but not the new block's.
    - **Open:** the new block's saved apps that aren't running yet (one launch per app).
    - **Move back into place:** saved apps that are already open go back to their saved position

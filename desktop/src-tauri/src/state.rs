@@ -8,7 +8,12 @@ use tauri::{AppHandle, Manager};
 
 use crate::error::AppResult;
 
-pub const DEFAULT_BACKEND_URL: &str = "http://localhost:3000";
+/// Backend a fresh install talks to. Release builds set `DUBX_BACKEND_URL` at compile time
+/// (e.g. the Vercel deployment); users can still change it under "Server settings".
+pub const DEFAULT_BACKEND_URL: &str = match option_env!("DUBX_BACKEND_URL") {
+    Some(url) => url,
+    None => "http://localhost:3000",
+};
 
 /// User settings, persisted as JSON in the app's config directory.
 #[derive(Debug, Clone, Serialize, Deserialize)]

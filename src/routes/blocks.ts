@@ -7,8 +7,7 @@ import { Block, serializeBlock, type BlockDoc } from "../models/Block.ts";
 import { MAX_WINDOWS, windowInput } from "../models/Window.ts";
 import { syncBlocks } from "../services/blockSync.ts";
 import { CalendarError, listCalendarEvents } from "../services/calendar.ts";
-import { sendEvent, subscribe } from "../services/notifier.ts";
-import { promptFor, scheduler } from "../services/scheduler.ts";
+import { duePrompts, promptFor } from "../services/prompts.ts";
 
 export const blocksRouter = Router();
 blocksRouter.use(requireAuth);
@@ -65,7 +64,7 @@ blocksRouter.get("/", async (req, res) => {
 
 // GET /blocks/upcoming[?within=minutes]
 // Prompts for blocks starting in the next `within` minutes (default REMINDER_LEAD_MINUTES).
-// Polling alternative to /blocks/stream.
+// Simple peek at what is about to start (the desktop app uses /blocks/due).
 blocksRouter.get("/upcoming", async (req, res) => {
   const q = z
     .object({ within: z.coerce.number().int().min(1).max(7 * 24 * 60).optional() })
@@ -85,16 +84,16 @@ function upcomingBlocks(userId: string, withinMinutes: number) {
     .lean<BlockDoc[]>();
 }
 
-// GET /blocks/stream  (Server-Sent Events)
-// Events: `block_upcoming` (REMINDER_LEAD_MINUTES before start) and `block_started` (at start).
-// Each carries { kind, needsWindows, message, block }. Blocks already inside their lead window
-// are sent as `block_upcoming` as soon as the stream opens, so a late connect misses nothing.
-blocksRouter.get("/stream", async (req, res) => {
-  const userId = req.userId!;
-  subscribe(userId, res);
-  for (const b of await upcomingBlocks(userId, config.REMINDER_LEAD_MINUTES)) {
-    if (!res.writableEnded) sendEvent(res, "block_upcoming", promptFor(b, "upcoming"));
-  }
+// GET /blocks/due[?since=ISO]
+// What the desktop app polls (every ~10s): prompts that fell due since its last check.
+// `block_upcoming` arrives REMINDER_LEAD_MINUTES before a block starts, `block_started` at its
+// start. Send the previous response's `now` as `since`; the first call (no `since`) returns blocks
+// already inside their lead window. Stateless, so it works across serverless instances.
+blocksRouter.get("/due", async (req, res) => {
+  const q = z.object({ since: z.coerce.date().optional() }).safeParse(req.query);
+  if (!q.success) return badRequest(res, q.error);
+  const now = Date.now();
+  res.json({ now: new Date(now).toISOString(), prompts: await duePrompts(req.userId!, q.data.since, now) });
 });
 
 // Per-user guard so two overlapping syncs can't race on the same blocks.
@@ -150,12 +149,9 @@ blocksRouter.delete("/", async (req, res) => {
   const userId = req.userId!;
   if (q.data.before) {
     const filter = { userId, stop: { $lt: q.data.before } };
-    const ids = (await Block.find(filter).select("_id").lean()).map((b) => b._id);
-    await Block.deleteMany({ _id: { $in: ids } });
-    scheduler.unschedule(ids);
+    await Block.deleteMany(filter);
   } else {
     await Block.deleteMany({ userId });
-    scheduler.unscheduleUser(userId);
   }
   res.status(204).end();
 });
@@ -171,7 +167,6 @@ blocksRouter.delete("/:id", async (req, res) => {
   const block = await findOwnBlock(req.userId!, req.params.id, res);
   if (!block) return;
   await block.deleteOne();
-  scheduler.unschedule([block._id]);
   res.status(204).end();
 });
 

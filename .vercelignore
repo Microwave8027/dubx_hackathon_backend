@@ -1,0 +1,9 @@
+desktop
+example_ui
+Dockerfile
+docker-compose.yml
+.dockerignore
+node_modules
+.env
+.env.*
+!.env.example

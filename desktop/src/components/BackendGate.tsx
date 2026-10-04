@@ -46,7 +46,11 @@ export function BackendGate({ initial, onReady }: { initial: BackendStatus; onRe
   if (status.state === "ready") return null;
   const copy = COPY[status.state];
   // A remote backend isn't Docker on this machine, so only the generic message applies.
-  const body = status.local ? copy.body : `Can't reach ${status.backendUrl}. Check that the server is running.`;
+  const body = status.local
+    ? copy.body
+    : status.state === "outdated"
+      ? `${status.backendUrl} is running an older version than this app needs. Redeploy the backend.`
+      : `Can't reach ${status.backendUrl}. Check that the server is running.`;
 
   async function openDocker() {
     setError(null);

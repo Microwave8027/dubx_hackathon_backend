@@ -1,11 +1,11 @@
 {
   "name": "dubx_backend",
-  "module": "index.ts",
+  "module": "app.ts",
   "type": "module",
   "private": true,
   "scripts": {
-    "start": "bun run index.ts",
-    "dev": "bun --watch run index.ts",
+    "start": "bun run local.ts",
+    "dev": "bun --watch run local.ts",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {

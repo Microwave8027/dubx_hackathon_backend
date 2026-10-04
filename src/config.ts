@@ -12,7 +12,7 @@ const schema = z.object({
   GEMINI_API_KEY: z.string().min(1, "GEMINI_API_KEY is required"),
   GEMINI_MODEL: z.string().default("gemini-2.5-flash"),
   DEFAULT_TIME_ZONE: z.string().default("UTC"),
-  // How long before a block starts the scheduler sends its "coming up" prompt.
+  // How long before a block starts GET /blocks/due reports its "coming up" prompt.
   REMINDER_LEAD_MINUTES: z.coerce.number().int().min(1).max(1440).default(5),
   // Default look-ahead for POST /blocks/sync when the body has no `to`.
   SYNC_DAYS_AHEAD: z.coerce.number().int().min(1).max(365).default(14),

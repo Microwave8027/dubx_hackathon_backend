@@ -22,7 +22,6 @@ const blockSchema = new Schema(
 
 blockSchema.index({ userId: 1, googleEventId: 1 }, { unique: true });
 blockSchema.index({ userId: 1, start: 1 });
-blockSchema.index({ start: 1 }); // scheduler startup load
 
 // Plain-object shape (as returned by .lean()); hydrated documents satisfy it too.
 export type BlockDoc = Omit<InferSchemaType<typeof blockSchema>, "windows"> & {

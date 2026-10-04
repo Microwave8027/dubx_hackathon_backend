@@ -3,7 +3,7 @@
 Express + MongoDB backend with Google OAuth. Users log in with Google, and Gemini builds a
 personalized schedule from a POST body and creates it in their Google Calendar. It also backs the
 [desktop app](desktop/README.md): every calendar block gets a group of saved windows, and a
-scheduler tells the app when blocks are coming up or starting.
+the app is told when blocks are coming up or starting.
 
 ## Setup
 
@@ -18,14 +18,42 @@ scheduler tells the app when blocks are coming up or starting.
    - `SESSION_SECRET` — any long random string.
 4. `bun run dev` (or `bun start`)
 
-## Docker
+## Deploy on Vercel
+
+`app.ts` (project root) default-exports the Express app, which Vercel detects and runs as a
+function; `vercel.json` selects the Bun runtime (matching `bun.lock`). `local.ts` is the
+long-running entry point used by `bun run dev` and Docker. The server keeps no state in memory:
+MongoDB is connected on first request and cached, sessions live in MongoDB, and reminders are
+computed per request (see *Reminders*).
+
+1. **Database:** use MongoDB Atlas (Vercel can't run a database). Allow connections from anywhere
+   (`0.0.0.0/0`) in Atlas Network Access, since function IPs aren't fixed. Put the database in the
+   region your functions run in.
+2. **Import the repo** at vercel.com/new (or run `bunx vercel`). Leave the framework as detected;
+   the root directory is this folder.
+3. **Environment variables** (Project Settings, Environment Variables): everything in
+   `.env.example`, with these production values:
+   - `NODE_ENV=production` (Vercel sets it) makes session cookies `secure`.
+   - `MONGODB_URI` is your Atlas connection string.
+   - `GOOGLE_REDIRECT_URI=https://<your-domain>/auth/google/callback`.
+   - `SESSION_SECRET` is a long random string. Don't reuse your local one.
+4. **Google Cloud Console:** add that same redirect URI to the OAuth client's authorized redirect URIs.
+5. **Check:** `https://<your-domain>/health` returns `{ "ok": true, "api": 4 }`.
+6. **Desktop app:** build it with your URL as the default, or set it under *Server settings*:
+   `DUBX_BACKEND_URL=https://<your-domain> bun run tauri build` (in `desktop/`).
+
+Notes: Vercel's Bun runtime is in beta. Calendar sync and Gemini calls run inside one request, so
+they must finish within your plan's function duration limit (all default plans allow 60s+).
+
+## Docker (local or self-hosted)
 
 ```bash
 docker compose up -d --build
 ```
 
-This is how the desktop app expects the backend to run: start Docker Desktop, then the app.
-Rebuild with `--build` after pulling backend changes, or the app will report an outdated backend.
+For running the whole stack locally: start Docker Desktop, then the desktop app (which defaults
+to `http://localhost:3000`). Rebuild with `--build` after pulling backend changes, or the app will
+report an outdated backend.
 
 Runs the app plus its own MongoDB (data in the `mongo-data` volume, not exposed to the host).
 It reads secrets from `.env` and points `MONGODB_URI` at the bundled Mongo automatically. The
@@ -58,8 +86,8 @@ to your public URLs and register the redirect URI in Google Cloud Console.
 | POST   | `/schedule/generate`    | Gemini builds a schedule from the JSON body, creates it in Google Calendar, replaces the previous schedule, returns the new one. |
 | GET    | `/blocks`               | Stored blocks (calendar events + their windows), sorted by start. Default: not yet ended. `?from=&to=` window, `?empty=true` only blocks with no windows. |
 | POST   | `/blocks/sync`          | Syncs blocks with Google Calendar (body `{ from?, to? }`, default now → `SYNC_DAYS_AHEAD` days). |
-| GET    | `/blocks/stream`        | Server-Sent Events: `block_upcoming` / `block_started` prompts. |
-| GET    | `/blocks/upcoming`      | Prompts for blocks starting in the next `?within=` minutes (default `REMINDER_LEAD_MINUTES`). Polling alternative to the stream. |
+| GET    | `/blocks/due`           | `?since=<ISO>`: reminder prompts that fell due since the last check (the desktop app polls this every 10s). |
+| GET    | `/blocks/upcoming`      | Peek at blocks starting in the next `?within=` minutes (default `REMINDER_LEAD_MINUTES`). |
 | DELETE | `/blocks`               | Deletes all the user's blocks, or with `?before=<ISO>` only those that ended before it. |
 | GET    | `/blocks/:id`           | One block. |
 | DELETE | `/blocks/:id`           | Deletes a block and its windows (the calendar event is untouched). |
@@ -73,7 +101,7 @@ to your public URLs and register the redirect URI in Google Cloud Console.
 | PUT    | `/configs/:id`          | `{ name?, description?, windows? }`: renames it and/or replaces its windows. |
 | POST   | `/configs/:id/used`     | Marks it as just loaded (for sorting). |
 | DELETE | `/configs/:id`          | Deletes it. Blocks that copied its windows keep them. |
-| GET    | `/health`               | Liveness check: `{ ok: true, api: 3 }`. The desktop app uses `api` to detect an outdated Docker image. |
+| GET    | `/health`               | Liveness check: `{ ok: true, api: 4 }`. The desktop app uses `api` to detect an outdated backend. |
 
 All `/schedule`, `/blocks` and `/configs` routes require the session cookie (send requests with credentials)
 or `Authorization: Bearer <token>` from the desktop login.
@@ -161,19 +189,23 @@ match it:
 
 The response is `{ added, replaced, removed, unchanged, blocks }`.
 
-**Scheduler.** Block start times are kept in an in-memory queue sorted by time, with one timer
-armed for the earliest. For each block it pushes `block_upcoming` `REMINDER_LEAD_MINUTES` before
-start and `block_started` at start, over `GET /blocks/stream` (SSE):
+**Reminders.** There is no scheduler process and no held-open connection: every call to
+`GET /blocks/due?since=<ISO>` works out, from the stored blocks, which prompts fell due since the
+client's last check, so any server instance can answer it. The desktop app polls every 10 seconds
+and passes the `now` from the previous response as `since`.
 
-```
-event: block_upcoming
-data: {"kind":"upcoming","needsWindows":true,"message":"\"Gym\" starts in 5 minutes. No windows are saved for it yet. Save your current windows?","block":{...}}
+- `upcoming`: `REMINDER_LEAD_MINUTES` before a block starts. Also sent right away for a block
+  created or synced inside its lead window.
+- `started`: when the block's start time passes.
+
+```json
+{ "now": "2026-10-05T13:55:02.114Z",
+  "prompts": [ { "kind": "upcoming", "needsWindows": true, "message": "\"Gym\" starts in 5 minutes. No windows are saved for it yet. Save your current windows?", "block": { } } ] }
 ```
 
-`needsWindows: true` means the app should ask the user to save their current windows. On
-`block_started` with saved windows, the app should open them. Blocks already inside their lead
-window are sent as soon as the stream connects. The queue is rebuilt from MongoDB on startup,
-which assumes a single backend instance.
+`needsWindows: true` means the app should ask the user to save their current windows. On `started`
+with saved windows, the app should open them. Without `since`, blocks already inside their lead
+window are returned. Prompts older than 10 minutes are dropped (e.g. after the laptop slept).
 
 ## Notes
 

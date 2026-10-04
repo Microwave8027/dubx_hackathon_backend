@@ -1,10 +1,10 @@
-//! Listens to the backend's Server-Sent Events stream (`GET /blocks/stream`) and turns block
-//! prompts into native notifications plus a `block-prompt` event for the UI.
+//! Polls the backend (`GET /blocks/due`) and turns block prompts into native notifications plus a
+//! `block-prompt` event for the UI. Polling instead of a held-open stream keeps the backend
+//! stateless, so it can run on serverless hosting.
 
 use std::collections::HashSet;
 use std::time::Duration;
 
-use futures_util::StreamExt;
 use serde_json::Value;
 use std::sync::atomic::Ordering;
 
@@ -14,8 +14,7 @@ use tauri_plugin_notification::NotificationExt;
 use crate::api;
 use crate::state::{show_main_window, AppState};
 
-// The backend sends a heartbeat every 10s; silence for longer than this means a dead connection.
-const IDLE_TIMEOUT: Duration = Duration::from_secs(45);
+const POLL_INTERVAL: Duration = Duration::from_secs(10);
 const MAX_BACKOFF: Duration = Duration::from_secs(60);
 
 /// (Re)starts the listener if signed in.
@@ -42,40 +41,51 @@ fn set_live(app: &AppHandle, live: bool) {
 }
 
 enum End {
+    Ok,
     Unauthorized(String),
     Failed,
 }
 
 async fn run(app: AppHandle) {
-    // Prompts already shown, so reconnects (which replay blocks inside their lead time) don't repeat them.
+    // Prompts already shown, in case an overlapping poll window returns one twice.
     let mut seen = HashSet::new();
+    // Server time of the last successful poll; the next poll asks for what fell due after it.
+    let mut since: Option<String> = None;
     let mut backoff = Duration::from_secs(1);
     loop {
-        match connect(&app, &mut seen, &mut backoff).await {
+        match poll(&app, &mut since, &mut seen).await {
             End::Unauthorized(reason) => {
                 api::signed_out(&app, &reason);
                 return;
             }
-            End::Failed => set_live(&app, false),
+            End::Failed => {
+                set_live(&app, false);
+                tokio::time::sleep(backoff).await;
+                backoff = (backoff * 2).min(MAX_BACKOFF);
+            }
+            End::Ok => {
+                backoff = Duration::from_secs(1);
+                tokio::time::sleep(POLL_INTERVAL).await;
+            }
         }
-        tokio::time::sleep(backoff).await;
-        backoff = (backoff * 2).min(MAX_BACKOFF);
     }
 }
 
-async fn connect(app: &AppHandle, seen: &mut HashSet<String>, backoff: &mut Duration) -> End {
+/// One `GET /blocks/due` call (a plain request, so it works against serverless hosting too).
+async fn poll(app: &AppHandle, since: &mut Option<String>, seen: &mut HashSet<String>) -> End {
     let state = app.state::<AppState>();
     let Some(token) = state.token() else {
         return End::Unauthorized("You're signed out.".into());
     };
-    let res = match state
+    let mut req = state
         .http
-        .get(format!("{}/blocks/stream", state.backend_url()))
+        .get(format!("{}/blocks/due", state.backend_url()))
         .bearer_auth(token)
-        .header("Accept", "text/event-stream")
-        .send()
-        .await
-    {
+        .timeout(Duration::from_secs(20));
+    if let Some(s) = since.as_deref() {
+        req = req.query(&[("since", s)]);
+    }
+    let res = match req.send().await {
         Ok(r) => r,
         Err(e) => {
             if e.is_connect() {
@@ -84,52 +94,30 @@ async fn connect(app: &AppHandle, seen: &mut HashSet<String>, backoff: &mut Dura
             return End::Failed;
         }
     };
-    if res.status().as_u16() == 401 {
-        let reason = api::parse::<Value>(res).await.err().map(|e| e.message).unwrap_or_default();
-        return End::Unauthorized(reason);
-    }
-    if !res.status().is_success() {
-        return End::Failed;
-    }
-
-    *backoff = Duration::from_secs(1);
-    set_live(app, true);
-
-    let mut body = res.bytes_stream();
-    let mut buf: Vec<u8> = Vec::new();
-    loop {
-        let chunk = match tokio::time::timeout(IDLE_TIMEOUT, body.next()).await {
-            Ok(Some(Ok(c))) => c,
-            _ => return End::Failed, // timeout, error, or server closed the stream
-        };
-        buf.extend(chunk.iter().filter(|&&b| b != b'\r'));
-        while let Some(pos) = buf.windows(2).position(|w| w == b"\n\n") {
-            let frame: Vec<u8> = buf.drain(..pos + 2).collect();
-            let frame = String::from_utf8_lossy(&frame);
-            let mut event = "message";
-            let mut data = Vec::new();
-            for line in frame.lines() {
-                if let Some(v) = line.strip_prefix("event:") {
-                    event = v.trim();
-                } else if let Some(v) = line.strip_prefix("data:") {
-                    data.push(v.strip_prefix(' ').unwrap_or(v));
-                }
+    match api::parse::<Value>(res).await {
+        Ok(body) => {
+            for prompt in body["prompts"].as_array().into_iter().flatten() {
+                handle_prompt(app, prompt, seen);
             }
-            if !data.is_empty() {
-                handle_event(app, event, &data.join("\n"), seen);
+            if let Some(now) = body["now"].as_str() {
+                *since = Some(now.to_string());
             }
+            set_live(app, true);
+            End::Ok
         }
+        Err(e) if e.status == Some(401) => End::Unauthorized(e.message),
+        Err(_) => End::Failed,
     }
 }
 
-fn handle_event(app: &AppHandle, event: &str, data: &str, seen: &mut HashSet<String>) {
-    if event != "block_upcoming" && event != "block_started" {
+fn handle_prompt(app: &AppHandle, prompt: &Value, seen: &mut HashSet<String>) {
+    let kind = prompt["kind"].as_str().unwrap_or_default();
+    if kind != "upcoming" && kind != "started" {
         return;
     }
-    let Ok(prompt) = serde_json::from_str::<Value>(data) else { return };
     let block = &prompt["block"];
     let key = format!(
-        "{event}:{}:{}",
+        "{kind}:{}:{}",
         block["id"].as_str().unwrap_or_default(),
         block["start"].as_str().unwrap_or_default()
     );
@@ -137,10 +125,10 @@ fn handle_event(app: &AppHandle, event: &str, data: &str, seen: &mut HashSet<Str
         return;
     }
 
-    let _ = app.emit("block-prompt", &prompt);
+    let _ = app.emit("block-prompt", prompt);
 
     let name = block["name"].as_str().unwrap_or("Your next block");
-    let title = if event == "block_started" {
+    let title = if kind == "started" {
         format!("{name} is starting")
     } else {
         format!("Coming up: {name}")
@@ -154,7 +142,7 @@ fn handle_event(app: &AppHandle, event: &str, data: &str, seen: &mut HashSet<Str
 
     // Starting blocks ask to switch; blocks without windows ask which apps to save.
     let needs_windows = prompt["needsWindows"].as_bool().unwrap_or(false);
-    if event == "block_started" || needs_windows {
+    if kind == "started" || needs_windows {
         show_main_window(app);
         if let Some(w) = app.get_webview_window("main") {
             let _ = w.request_user_attention(Some(UserAttentionType::Informational));

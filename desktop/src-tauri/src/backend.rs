@@ -12,7 +12,7 @@ use crate::error::{AppError, AppResult};
 use crate::state::AppState;
 
 /// Oldest backend API this app works with (reported by the backend's `/health`).
-const REQUIRED_API: u64 = 3;
+const REQUIRED_API: u64 = 4;
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]

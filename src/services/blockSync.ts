@@ -2,7 +2,6 @@ import { createHash } from "node:crypto";
 import { Types } from "mongoose";
 import { Block, type BlockDoc } from "../models/Block.ts";
 import type { CalendarEvent } from "./calendar.ts";
-import { scheduler } from "./scheduler.ts";
 
 /** Identifies a block's defining fields; a change means the block is treated as a new one. */
 export function fingerprint(e: { name: string; start: Date; stop: Date }): string {
@@ -102,10 +101,8 @@ export async function syncBlocks(
       })),
     );
   }
-  const inserted = toInsert.length ? await Block.insertMany(toInsert) : [];
+  if (toInsert.length) await Block.insertMany(toInsert);
 
-  scheduler.unschedule(toDelete);
-  scheduler.schedule(inserted);
 
   const blocks = await Block.find({
     userId,
