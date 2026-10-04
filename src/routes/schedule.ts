@@ -10,13 +10,21 @@ import {
   listAppEvents,
   listCalendarEvents,
   mapLimit,
+  patchEvent,
 } from "../services/calendar.ts";
-import { GeminiError, generateSchedule, type GeneratedEvent } from "../services/gemini.ts";
+import {
+  GeminiError,
+  MAX_OPERATIONS,
+  generateSchedule,
+  proposeEdits,
+  type GeneratedEvent,
+} from "../services/gemini.ts";
 
 export const scheduleRouter = Router();
 scheduleRouter.use(requireAuth);
 
 type EventLike = {
+  googleEventId?: string;
   name: string;
   description?: string | null;
   start: Date;
@@ -27,6 +35,7 @@ type EventLike = {
 /** Public shape of a calendar entry. */
 function serialize(e: EventLike) {
   return {
+    ...(e.googleEventId ? { id: e.googleEventId } : {}),
     start: e.start.toISOString(),
     stop: e.stop.toISOString(),
     color: e.color,
@@ -67,7 +76,7 @@ scheduleRouter.get("/", async (req, res) => {
     return;
   }
 
-  const client = await clientForUser(req.session.userId!);
+  const client = await clientForUser(req.userId!);
   if (!client) {
     res.status(401).json({ error: NOT_CONNECTED });
     return;
@@ -90,50 +99,204 @@ function isValidTimeZone(tz: unknown): tz is string {
   }
 }
 
+const eventFields = {
+  name: z.string().trim().min(1).max(200),
+  description: z.string().max(2000).default(""),
+  start: z.coerce.date(),
+  stop: z.coerce.date(),
+  color: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/, "color must be #RRGGBB")
+    .default("#039BE5")
+    .transform((c) => c.toUpperCase()),
+};
+const timeZoneField = z.string().refine(isValidTimeZone, "invalid IANA time zone").optional();
+const stopAfterStart = { message: "stop must be after start", path: ["stop"] };
+
 const newEventBody = z
-  .object({
-    name: z.string().trim().min(1).max(200),
-    description: z.string().max(2000).default(""),
-    start: z.coerce.date(),
-    stop: z.coerce.date(),
-    color: z
-      .string()
-      .regex(/^#[0-9a-fA-F]{6}$/, "color must be #RRGGBB")
-      .default("#039BE5"),
-    timeZone: z.string().refine(isValidTimeZone, "invalid IANA time zone").optional(),
-  })
-  .refine((e) => e.stop > e.start, { message: "stop must be after start", path: ["stop"] });
+  .object({ ...eventFields, timeZone: timeZoneField })
+  .refine((e) => e.stop > e.start, stopAfterStart);
+
+function sendBadRequest(res: Response, error: z.ZodError) {
+  const issue = error.issues[0];
+  res.status(400).json({ error: `${issue?.path.join(".") || "body"}: ${issue?.message}` });
+}
+
+// Google event ids are base32hex, plus `_<timestamp>` for instances of recurring events.
+const EVENT_ID = /^[A-Za-z0-9_-]{1,1024}$/;
 
 // POST /schedule/events -> create one event directly (no Gemini), stored only in Google Calendar
 scheduleRouter.post("/events", async (req, res) => {
   const parsed = newEventBody.safeParse(req.body);
-  if (!parsed.success) {
-    const issue = parsed.error.issues[0];
-    res.status(400).json({ error: `${issue?.path.join(".") || "body"}: ${issue?.message}` });
+  if (!parsed.success) return sendBadRequest(res, parsed.error);
+  const { timeZone, ...event } = parsed.data;
+  const client = await clientForUser(req.userId!);
+  if (!client) {
+    res.status(401).json({ error: NOT_CONNECTED });
     return;
   }
+  let googleEventId: string;
+  try {
+    googleEventId = await insertEvent(client, event, timeZone ?? config.DEFAULT_TIME_ZONE);
+  } catch (err) {
+    if (err instanceof CalendarError) return sendCalendarError(res, err);
+    throw err;
+  }
+  res.status(201).json(serialize({ ...event, googleEventId }));
+});
+
+// PUT /schedule/events/:id -> replaces an event's name/description/start/stop/color
+// (any event on the user's primary calendar; attendees, reminders etc. are kept)
+scheduleRouter.put("/events/:id", async (req, res) => {
+  if (!EVENT_ID.test(req.params.id)) {
+    res.status(400).json({ error: "Invalid event id" });
+    return;
+  }
+  const parsed = newEventBody.safeParse(req.body);
+  if (!parsed.success) return sendBadRequest(res, parsed.error);
   const { timeZone, ...event } = parsed.data;
-  const client = await clientForUser(req.session.userId!);
+  const client = await clientForUser(req.userId!);
   if (!client) {
     res.status(401).json({ error: NOT_CONNECTED });
     return;
   }
   try {
-    await insertEvent(
-      client,
-      { ...event, color: event.color.toUpperCase() },
-      timeZone ?? config.DEFAULT_TIME_ZONE,
-    );
+    await patchEvent(client, req.params.id, event, timeZone ?? config.DEFAULT_TIME_ZONE);
+  } catch (err) {
+    if (err instanceof CalendarError) {
+      if (err.status === 404 || err.status === 410) {
+        res.status(404).json({ error: "Event not found" });
+        return;
+      }
+      return sendCalendarError(res, err);
+    }
+    throw err;
+  }
+  res.json(serialize({ ...event, googleEventId: req.params.id }));
+});
+
+// DELETE /schedule/events/:id -> deletes one event from the user's primary calendar
+scheduleRouter.delete("/events/:id", async (req, res) => {
+  if (!EVENT_ID.test(req.params.id)) {
+    res.status(400).json({ error: "Invalid event id" });
+    return;
+  }
+  const client = await clientForUser(req.userId!);
+  if (!client) {
+    res.status(401).json({ error: NOT_CONNECTED });
+    return;
+  }
+  try {
+    await deleteEvent(client, req.params.id);
   } catch (err) {
     if (err instanceof CalendarError) return sendCalendarError(res, err);
     throw err;
   }
-  res.status(201).json(serialize({ ...event, color: event.color.toUpperCase() }));
+  res.status(204).end();
+});
+
+const MAX_ASSIST_EVENTS = 300;
+
+const assistBody = z.object({
+  prompt: z.string().trim().min(1).max(4000),
+  timeZone: timeZoneField,
+  from: z.coerce.date().optional(),
+  to: z.coerce.date().optional(),
+});
+
+// POST /schedule/assist { prompt, timeZone?, from?, to? }
+// Gemini reads the calendar in the window (default: the last day through 14 days ahead) and
+// proposes create/update/delete operations for the prompt. Nothing is changed: show the proposal
+// to the user, then send the accepted operations to POST /schedule/batch.
+scheduleRouter.post("/assist", async (req, res) => {
+  const parsed = assistBody.safeParse(req.body);
+  if (!parsed.success) return sendBadRequest(res, parsed.error);
+  const { prompt, timeZone = config.DEFAULT_TIME_ZONE } = parsed.data;
+  const from = parsed.data.from ?? new Date(Date.now() - DAY_MS);
+  const to = parsed.data.to ?? new Date(from.getTime() + 15 * DAY_MS);
+  if (to <= from) {
+    res.status(400).json({ error: "to must be after from" });
+    return;
+  }
+  const client = await clientForUser(req.userId!);
+  if (!client) {
+    res.status(401).json({ error: NOT_CONNECTED });
+    return;
+  }
+  try {
+    const events = (await listCalendarEvents(client, { from, to })).slice(0, MAX_ASSIST_EVENTS);
+    const proposal = await proposeEdits(prompt, events, timeZone);
+    res.json({
+      summary: proposal.summary,
+      warnings: proposal.warnings,
+      operations: proposal.operations.map((o) =>
+        o.op === "delete" ? o : { ...o, start: o.start.toISOString(), stop: o.stop.toISOString() },
+      ),
+    });
+  } catch (err) {
+    if (err instanceof CalendarError) return sendCalendarError(res, err);
+    if (err instanceof GeminiError) {
+      res.status(502).json({ error: err.message });
+      return;
+    }
+    throw err;
+  }
+});
+
+const batchOperation = z.discriminatedUnion("op", [
+  z.object({ op: z.literal("create"), ...eventFields }),
+  z.object({ op: z.literal("update"), id: z.string().regex(EVENT_ID), ...eventFields }),
+  z.object({ op: z.literal("delete"), id: z.string().regex(EVENT_ID) }),
+]);
+
+const batchBody = z.object({
+  timeZone: timeZoneField,
+  operations: z
+    .array(batchOperation)
+    .min(1)
+    .max(MAX_OPERATIONS)
+    .refine((ops) => ops.every((o) => o.op === "delete" || o.stop > o.start), {
+      message: "stop must be after start",
+    }),
+});
+
+// POST /schedule/batch { timeZone?, operations: [{ op: "create"|"update"|"delete", ... }] }
+// Applies operations (e.g. an accepted /schedule/assist proposal). Each one succeeds or fails on
+// its own; the response lists the outcome per operation, in order.
+scheduleRouter.post("/batch", async (req, res) => {
+  const parsed = batchBody.safeParse(req.body);
+  if (!parsed.success) return sendBadRequest(res, parsed.error);
+  const timeZone = parsed.data.timeZone ?? config.DEFAULT_TIME_ZONE;
+  const client = await clientForUser(req.userId!);
+  if (!client) {
+    res.status(401).json({ error: NOT_CONNECTED });
+    return;
+  }
+  const results = await mapLimit(parsed.data.operations, 5, async (o) => {
+    const id = o.op === "create" ? null : o.id;
+    try {
+      if (o.op === "create") {
+        const { op, ...event } = o;
+        return { op, id: await insertEvent(client, event, timeZone), ok: true };
+      }
+      if (o.op === "update") {
+        const { op, id: eventId, ...event } = o;
+        await patchEvent(client, eventId, event, timeZone);
+      } else {
+        await deleteEvent(client, o.id);
+      }
+      return { op: o.op, id, ok: true };
+    } catch (err) {
+      if (!(err instanceof CalendarError)) throw err;
+      return { op: o.op, id, ok: false, error: err.message };
+    }
+  });
+  res.json({ results });
 });
 
 // DELETE /schedule -> remove every event this app created (the user's own events are untouched)
 scheduleRouter.delete("/", async (req, res) => {
-  const client = await clientForUser(req.session.userId!);
+  const client = await clientForUser(req.userId!);
   if (!client) {
     res.status(401).json({ error: NOT_CONNECTED });
     return;
@@ -172,7 +335,7 @@ scheduleRouter.post("/generate", async (req, res) => {
   }
   const timeZone = bodyTz ?? config.DEFAULT_TIME_ZONE;
 
-  const userId = req.session.userId!;
+  const userId = req.userId!;
   const client = await clientForUser(userId);
   if (!client) {
     res.status(401).json({ error: NOT_CONNECTED });

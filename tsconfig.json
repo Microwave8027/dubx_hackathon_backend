@@ -26,5 +26,7 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noPropertyAccessFromIndexSignature": false
-  }
+  },
+  // The desktop app and example UI have their own toolchains.
+  "exclude": ["node_modules", "desktop", "example_ui"]
 }

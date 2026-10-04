@@ -8,3 +8,4 @@ docker-compose.yml
 README.md
 *.log
 example_ui
+desktop

@@ -80,7 +80,11 @@ async function call<T = unknown>(
 // them again later without keeping any copy of the calendar in our own database.
 const APP_TAG = "dubx";
 
-export type CalendarEvent = GeneratedEvent & { googleEventId: string };
+export type CalendarEvent = GeneratedEvent & {
+  googleEventId: string;
+  /** All-day events come back from Google with a date instead of a dateTime. */
+  allDay: boolean;
+};
 
 export async function insertEvent(
   client: OAuth2Client,
@@ -100,6 +104,27 @@ export async function insertEvent(
     },
   });
   return created!.id;
+}
+
+/** Updates an existing event's title, description, times and color (other fields are kept). */
+export async function patchEvent(
+  client: OAuth2Client,
+  googleEventId: string,
+  e: GeneratedEvent,
+  timeZone: string,
+): Promise<void> {
+  await call(client, `${BASE}/${encodeURIComponent(googleEventId)}`, {
+    method: "PATCH",
+    body: {
+      summary: e.name,
+      description: e.description,
+      start: { dateTime: e.start.toISOString(), timeZone },
+      end: { dateTime: e.stop.toISOString(), timeZone },
+      colorId: nearestColorId(e.color),
+      // PATCH merges nested objects, so this keeps any existing private properties.
+      extendedProperties: { private: { color: e.color } },
+    },
+  });
 }
 
 export async function deleteEvent(client: OAuth2Client, googleEventId: string): Promise<void> {
@@ -154,6 +179,7 @@ async function listEvents(client: OAuth2Client, opts: ListOptions): Promise<Cale
       if (g.status === "cancelled" || !start || !stop) continue;
       out.push({
         googleEventId: g.id,
+        allDay: !g.start?.dateTime,
         name: g.summary ?? "(no title)",
         description: g.description ?? "",
         start: new Date(start),
