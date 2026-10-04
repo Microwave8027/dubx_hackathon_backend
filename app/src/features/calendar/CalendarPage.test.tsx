@@ -173,7 +173,8 @@ describe('CalendarPage: events', () => {
     const lecture = await screen.findByRole('article', { name: 'Lecture' });
     expect(lecture).toHaveTextContent('In progress');
     expect(screen.getByRole('article', { name: 'Study group' })).toHaveTextContent('Starting soon');
-    expect(screen.getByRole('article', { name: 'Gym' })).toBeInTheDocument();
+    // Late in the evening it runs past midnight and shows on both days.
+    expect(screen.getAllByRole('article', { name: 'Gym' }).length).toBeGreaterThan(0);
     const today = document.querySelector('[data-today="true"]');
     expect(today).not.toBeNull();
   });

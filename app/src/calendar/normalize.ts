@@ -159,7 +159,7 @@ function normalizeEvent(raw: unknown, tz: string | undefined): EventResult {
 
   const start = parseTime(pick(o, 'start', 'startTime', 'start_time'), tz);
   if (!start) return { kind: 'invalid' };
-  const rawEnd = pick(o, 'end', 'endTime', 'end_time');
+  const rawEnd = pick(o, 'end', 'endTime', 'end_time', 'stop');
   const end = rawEnd === undefined ? null : parseTime(rawEnd, tz);
   if (rawEnd !== undefined && !end) return { kind: 'invalid' };
 
@@ -178,7 +178,7 @@ function normalizeEvent(raw: unknown, tz: string | undefined): EventResult {
     if (e.getTime() < s.getTime()) return { kind: 'invalid' };
   }
 
-  const title = str(pick(o, 'title', 'summary')) ?? '(No title)';
+  const title = str(pick(o, 'title', 'summary', 'name')) ?? '(No title)';
   const id = str(o.id) ?? (typeof o.id === 'number' ? String(o.id) : derivedId(title, s.getTime()));
   const color = str(o.color);
 

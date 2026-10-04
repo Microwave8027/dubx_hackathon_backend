@@ -21,6 +21,8 @@ export function createDirectTransport(opts: DirectOptions = {}): Transport {
         method,
         headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
         body: body === undefined ? undefined : JSON.stringify(body),
+        // The backend signs users in with a session cookie, so send it on cross-origin calls.
+        credentials: 'include',
       });
       let json: unknown = null;
       if (res.status !== 204) {

@@ -8,6 +8,7 @@ import { ACTION_CATEGORIES, SCRIPTS, createState, id, now } from './state.js';
 import { contextScreenshotSvg, makeFrame } from './frames.js';
 import { buildSchedule } from './schedule.js';
 import { createExtensionApi } from './extension.js';
+import { createAssistantMock } from './assistant.js';
 
 const PORT = Number(process.env.MOCK_PORT ?? 8787);
 const STEP_MS = Number(process.env.MOCK_STEP_MS ?? 6000);
@@ -39,6 +40,7 @@ export function createMock({ autoStart = true } = {}) {
   // Google Calendar link (assumed endpoints, see src/calendar/google.ts). Starts unlinked.
   const google = { connected: false, account: null };
   const timers = [];
+  const assistant = createAssistantMock();
   const extension = createExtensionApi({
     extensionId: process.env.MOCK_EXTENSION_ID || undefined,
   });
@@ -46,7 +48,14 @@ export function createMock({ autoStart = true } = {}) {
   // The extension endpoints have their own strict CORS, so they sit ahead of the open one below.
   app.use(extension.router);
   app.use((req, res, next) => {
-    res.set('Access-Control-Allow-Origin', '*');
+    // The real backend uses a session cookie, so the UI sends credentials; a wildcard origin is
+    // not allowed with credentials, so echo the caller's origin (this is only a dev mock).
+    const origin = req.get('Origin');
+    res.set('Access-Control-Allow-Origin', origin ?? '*');
+    if (origin) {
+      res.set('Vary', 'Origin');
+      res.set('Access-Control-Allow-Credentials', 'true');
+    }
     res.set('Access-Control-Allow-Headers', 'Content-Type');
     res.set('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
     if (req.method === 'OPTIONS') return res.sendStatus(204);
@@ -405,7 +414,9 @@ export function createMock({ autoStart = true } = {}) {
 
   // Calendar: the whole window, in the shape documented in docs/calendar-payload.md.
   // from/to are accepted but ignored on purpose: the client must filter to the visible range.
-  app.get('/schedule', (_req, res) => res.json(buildSchedule(calendar.mode, Date.now(), 0)));
+  const baseSchedule = (pushed = 0) => buildSchedule(calendar.mode, Date.now(), pushed);
+  app.get('/schedule', (_req, res) => res.json(assistant.applyTo(baseSchedule())));
+  assistant.register(app, baseSchedule);
 
   // Google Calendar link. The mock links instantly; the real backend returns an authUrl to open.
   app.get('/integrations/google-calendar', (_req, res) =>
@@ -463,7 +474,7 @@ export function createMock({ autoStart = true } = {}) {
   function pushCalendar(type) {
     if (type === 'updated') return broadcast('calendar.updated', undefined);
     calendar.pushed += 1;
-    broadcast('calendar.snapshot', buildSchedule(calendar.mode, Date.now(), calendar.pushed));
+    broadcast('calendar.snapshot', assistant.applyTo(baseSchedule(calendar.pushed)));
   }
 
   function reset() {
@@ -477,6 +488,7 @@ export function createMock({ autoStart = true } = {}) {
     google.connected = false;
     google.account = null;
     extension.reset();
+    assistant.reset();
   }
 
   wss.on('connection', (ws) => {

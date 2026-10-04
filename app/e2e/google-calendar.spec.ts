@@ -59,7 +59,14 @@ test.describe('google calendar', () => {
     // Expected failures: every calendar request 404s, so the browser logs them.
     allowConsole.push(/404|Failed to load resource|CORS/i);
     await app.route(/localhost:8787\/(integrations|schedule)/, (r) =>
-      r.fulfill({ status: 404, headers: { 'access-control-allow-origin': '*' }, body: '{}' }),
+      r.fulfill({
+        status: 404,
+        headers: {
+          'access-control-allow-origin': 'http://localhost:1420',
+          'access-control-allow-credentials': 'true',
+        },
+        body: '{}',
+      }),
     );
     await app.goto('/calendar');
     await expect(app.getByRole('button', { name: 'Connect Google Calendar' })).toBeVisible();

@@ -14,6 +14,7 @@ import { Toaster } from './Toaster';
 const nav = [
   { to: '/', label: 'Dashboard', end: true },
   { to: '/calendar', label: 'Calendar', end: false },
+  { to: '/assistant', label: 'Assistant', end: false },
   { to: '/approvals', label: 'Approvals', end: false, badge: true },
   { to: '/briefing', label: 'Briefing', end: false },
   { to: '/log', label: 'Activity', end: false },

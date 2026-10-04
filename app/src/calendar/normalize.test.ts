@@ -289,3 +289,42 @@ describe('unusable payloads', () => {
     expect(normalizeCalendar([])).toMatchObject({ events: [], skipped: 0 });
   });
 });
+
+describe('the backend /schedule shape (name, stop, id)', () => {
+  it('reads name as the title and stop as the end', () => {
+    const { events, skipped } = normalizeCalendar([
+      {
+        id: 'abc123',
+        name: 'Deep work',
+        description: 'Focus',
+        start: '2026-10-05T09:00:00.000Z',
+        stop: '2026-10-05T11:00:00.000Z',
+        color: '#039BE5',
+      },
+    ]);
+    expect(skipped).toBe(0);
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({
+      id: 'abc123',
+      title: 'Deep work',
+      description: 'Focus',
+      color: '#039BE5',
+    });
+    expect(events[0]!.end.getTime() - events[0]!.start.getTime()).toBe(2 * 3_600_000);
+  });
+
+  it('prefers title and end when both spellings are present', () => {
+    const { events } = normalizeCalendar([
+      {
+        id: 'x',
+        title: 'A',
+        name: 'B',
+        start: '2026-10-05T09:00:00Z',
+        end: '2026-10-05T10:00:00Z',
+        stop: '2026-10-05T12:00:00Z',
+      },
+    ]);
+    expect(events[0]!.title).toBe('A');
+    expect(events[0]!.end.toISOString()).toBe('2026-10-05T10:00:00.000Z');
+  });
+});

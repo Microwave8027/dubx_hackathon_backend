@@ -10,6 +10,7 @@ import { OnboardingPage } from '@/features/profile/OnboardingPage';
 import { SettingsPage } from '@/features/profile/SettingsPage';
 import { ApprovalsPage } from '@/features/approvals/ApprovalsPage';
 import { LayerDetail } from '@/features/layers/LayerDetail';
+import { AssistantPage } from '@/features/assistant/AssistantPage';
 import { CalendarPage } from '@/features/calendar/CalendarPage';
 import { WidgetPreview } from '@/widget/preview/WidgetPreview';
 
@@ -24,6 +25,7 @@ export const routes: RouteObject[] = [
       { path: 'layers/:layerId', element: <LayerDetail /> },
       { path: 'approvals', element: <ApprovalsPage /> },
       { path: 'calendar', element: <CalendarPage /> },
+      { path: 'assistant', element: <AssistantPage /> },
       { path: 'briefing', element: <BriefingPage /> },
       { path: 'log', element: <LogPage /> },
       { path: 'settings', element: <SettingsPage /> },
