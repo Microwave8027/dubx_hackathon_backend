@@ -29,6 +29,31 @@ fn widget_support_for(session_type: Option<&str>) -> WidgetSupport {
     }
 }
 
+/// Opens an https URL in the system browser. Only https is accepted, so the UI cannot be tricked
+/// into launching a local file or another app through a crafted link.
+fn open_external_checked(url: &str) -> Result<(), String> {
+    if !url.starts_with("https://") || url.chars().any(|c| c.is_control() || c == ' ') {
+        return Err("only https links can be opened".into());
+    }
+    let (program, args): (&str, Vec<&str>) = if cfg!(target_os = "macos") {
+        ("open", vec![url])
+    } else if cfg!(target_os = "windows") {
+        ("rundll32", vec!["url.dll,FileProtocolHandler", url])
+    } else {
+        ("xdg-open", vec![url])
+    };
+    std::process::Command::new(program)
+        .args(args)
+        .spawn()
+        .map(|_| ())
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn open_external(url: String) -> Result<(), String> {
+    open_external_checked(&url)
+}
+
 #[tauri::command]
 fn widget_support() -> WidgetSupport {
     widget_support_for(std::env::var("XDG_SESSION_TYPE").ok().as_deref())
@@ -59,7 +84,7 @@ fn watch_main_window(app: tauri::AppHandle) {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_notification::init())
-        .invoke_handler(tauri::generate_handler![widget_support])
+        .invoke_handler(tauri::generate_handler![widget_support, open_external])
         .setup(|app| {
             watch_main_window(app.handle().clone());
             Ok(())
@@ -71,6 +96,13 @@ pub fn run() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn only_https_links_can_be_opened() {
+        for bad in ["http://a.example", "file:///etc/passwd", "javascript:alert(1)", "https://a b", "", "https://a\n"] {
+            assert!(open_external_checked(bad).is_err(), "{bad:?} should be refused");
+        }
+    }
 
     #[test]
     fn x11_and_unset_sessions_are_supported() {

@@ -35,12 +35,14 @@ export function createMock({ autoStart = true } = {}) {
   const wss = new WebSocketServer({ server, path: '/events' });
   const runtime = new Map(); // layerId -> { script, stepIndex, timer, tick }
   const calendar = { mode: 'default', pushed: 0, tick: 0 };
+  // Google Calendar link (assumed endpoints, see src/calendar/google.ts). Starts unlinked.
+  const google = { connected: false, account: null };
   const timers = [];
 
   app.use((req, res, next) => {
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Headers', 'Content-Type');
-    res.set('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,OPTIONS');
+    res.set('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
     if (req.method === 'OPTIONS') return res.sendStatus(204);
     next();
   });
@@ -397,6 +399,21 @@ export function createMock({ autoStart = true } = {}) {
   // from/to are accepted but ignored on purpose: the client must filter to the visible range.
   app.get('/schedule', (_req, res) => res.json(buildSchedule(calendar.mode, Date.now(), 0)));
 
+  // Google Calendar link. The mock links instantly; the real backend returns an authUrl to open.
+  app.get('/integrations/google-calendar', (_req, res) =>
+    res.json({ connected: google.connected, account: google.account }),
+  );
+  app.post('/integrations/google-calendar/connect', (_req, res) => {
+    google.connected = true;
+    google.account = 'demo@example.com';
+    res.json({ connected: true, account: google.account });
+  });
+  app.delete('/integrations/google-calendar', (_req, res) => {
+    google.connected = false;
+    google.account = null;
+    res.json({ connected: false });
+  });
+
   // Mock-only helpers
   app.post('/__mock/demo', (_req, res) => {
     reset();
@@ -443,6 +460,8 @@ export function createMock({ autoStart = true } = {}) {
     runtime.clear();
     calendar.mode = 'default';
     calendar.pushed = 0;
+    google.connected = false;
+    google.account = null;
   }
 
   wss.on('connection', (ws) => {

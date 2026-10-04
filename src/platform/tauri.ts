@@ -10,6 +10,7 @@ import idleIcon from '@/assets/tray/idle.png?url';
 import workingIcon from '@/assets/tray/working.png?url';
 import needsYouIcon from '@/assets/tray/needs-you.png?url';
 import { emitPlatformEvent } from './events';
+import { invokeCommand } from './invoke';
 import {
   createMainWindowWidgetMethods,
   createWidgetWindowMethods,
@@ -145,5 +146,8 @@ export function createTauriPlatform(): Platform {
       await t.setTooltip(tooltips[state]);
     },
     showWindow,
+    async openExternal(url) {
+      await invokeCommand('open_external', { url });
+    },
   };
 }

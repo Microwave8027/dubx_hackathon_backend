@@ -24,6 +24,9 @@ export function createBrowserPlatform(): Platform {
     async showWindow() {
       window.focus();
     },
+    async openExternal(url) {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    },
     // The widget is a desktop window; a browser has none.
     async widgetSupport() {
       return { supported: false, reason: 'The widget is part of the desktop app.' };

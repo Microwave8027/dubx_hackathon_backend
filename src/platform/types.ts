@@ -25,6 +25,8 @@ export interface Platform {
   notify(options: NotifyOptions): Promise<void>;
   setTrayState(state: TrayState): Promise<void>;
   showWindow(): Promise<void>;
+  /** Opens an https page in the system browser (a Tauri webview cannot open new windows). */
+  openExternal(url: string): Promise<void>;
 
   // Desktop widget (the "widget" window). Browser and PWA builds have none; these are no-ops there.
   widgetSupport(): Promise<WidgetSupport>;

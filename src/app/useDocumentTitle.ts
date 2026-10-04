@@ -5,6 +5,7 @@ import { selectPendingCount, useLiveStore } from '@/state/store';
 const titles: [prefix: string, title: string][] = [
   ['/approvals', 'Approvals'],
   ['/layers/', 'Layer'],
+  ['/calendar', 'Calendar'],
   ['/briefing', 'Briefing'],
   ['/log', 'Activity'],
   ['/settings', 'Settings'],

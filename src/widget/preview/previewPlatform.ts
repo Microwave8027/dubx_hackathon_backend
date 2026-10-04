@@ -16,6 +16,7 @@ export function createPreviewPlatform(hooks: PreviewHooks): Platform {
     notify: async () => {},
     setTrayState: async () => {},
     showWindow: async () => {},
+    openExternal: async () => {},
     widgetSupport: async () => ({ supported: true }),
     showWidget: async () => {},
     hideWidget: async () => {},

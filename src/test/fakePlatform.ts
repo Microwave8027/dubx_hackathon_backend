@@ -9,6 +9,7 @@ export function createFakePlatform(overrides: Partial<Platform> = {}): Platform 
     notify: vi.fn().mockResolvedValue(undefined),
     setTrayState: vi.fn().mockResolvedValue(undefined),
     showWindow: vi.fn().mockResolvedValue(undefined),
+    openExternal: vi.fn().mockResolvedValue(undefined),
     widgetSupport: vi.fn().mockResolvedValue({ supported: true }),
     showWidget: vi.fn().mockResolvedValue(undefined),
     hideWidget: vi.fn().mockResolvedValue(undefined),
