@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/api/client';
+import { notifyExtensionConfigSaved } from '@/extension/bridge';
 import { queryKeys } from '@/api/queries';
 import type { Profile } from '@/api/types';
 import { toast } from '@/state/toastStore';
@@ -18,6 +19,8 @@ export function useProfileSave(onSaved?: (saved: Profile) => void) {
     onSuccess: (saved) => {
       queryClient.setQueryData(queryKeys.profile, saved);
       toast.info('Saved.');
+      // Instant capture on this browser; the extension on other browsers picks it up by polling.
+      void notifyExtensionConfigSaved();
       onSaved?.(saved);
     },
     onError: (err) =>

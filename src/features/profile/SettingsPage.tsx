@@ -7,6 +7,7 @@ import { detectTauri } from '@/platform';
 import { useThemeStore } from '@/theme/themeStore';
 import { BriefingTimeField } from './BriefingTimeField';
 import { ConnectionSection } from './ConnectionSection';
+import { ExtensionSection } from './ExtensionSection';
 import { PeakWindowsEditor } from './PeakWindowsEditor';
 import { TiersEditor } from './TiersEditor';
 import { WidgetSection } from './WidgetSection';
@@ -114,6 +115,13 @@ function ProfileForm({ initial }: { initial: Profile }) {
 
       <Section title="Connection">
         <ConnectionSection />
+      </Section>
+
+      <Section
+        title="Connect extension"
+        hint="The Chrome extension sends the tabs open in your browsers to your account whenever you save your settings. Create a token, then paste it into the extension."
+      >
+        <ExtensionSection />
       </Section>
 
       {dirty && (

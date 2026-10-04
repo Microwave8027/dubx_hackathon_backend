@@ -7,6 +7,7 @@ import { WebSocketServer } from 'ws';
 import { ACTION_CATEGORIES, SCRIPTS, createState, id, now } from './state.js';
 import { contextScreenshotSvg, makeFrame } from './frames.js';
 import { buildSchedule } from './schedule.js';
+import { createExtensionApi } from './extension.js';
 
 const PORT = Number(process.env.MOCK_PORT ?? 8787);
 const STEP_MS = Number(process.env.MOCK_STEP_MS ?? 6000);
@@ -38,7 +39,12 @@ export function createMock({ autoStart = true } = {}) {
   // Google Calendar link (assumed endpoints, see src/calendar/google.ts). Starts unlinked.
   const google = { connected: false, account: null };
   const timers = [];
+  const extension = createExtensionApi({
+    extensionId: process.env.MOCK_EXTENSION_ID || undefined,
+  });
 
+  // The extension endpoints have their own strict CORS, so they sit ahead of the open one below.
+  app.use(extension.router);
   app.use((req, res, next) => {
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Headers', 'Content-Type');
@@ -344,6 +350,8 @@ export function createMock({ autoStart = true } = {}) {
     p.tiers.make_payment = 'never';
     p.tiers.delete_files = 'never';
     state.profile = p;
+    // Saving the config creates a sync request every installed extension will answer.
+    extension.createSyncRequest('profile');
     res.json(state.profile);
   });
 
@@ -435,6 +443,12 @@ export function createMock({ autoStart = true } = {}) {
     res.json({ ok: true });
   });
 
+  // Tab-sync helpers: raise a sync request without saving, and see what the extensions posted.
+  app.post('/__mock/extension/sync-request', (_req, res) =>
+    res.json(extension.createSyncRequest('profile')),
+  );
+  app.get('/__mock/extension/snapshots', (_req, res) => res.json(extension.listSnapshots()));
+
   // Raises an approval on a running layer right now (used by tests).
   app.post('/__mock/approval', (_req, res) => {
     randomApproval();
@@ -462,6 +476,7 @@ export function createMock({ autoStart = true } = {}) {
     calendar.pushed = 0;
     google.connected = false;
     google.account = null;
+    extension.reset();
   }
 
   wss.on('connection', (ws) => {

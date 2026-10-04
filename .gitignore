@@ -32,3 +32,4 @@ test-results
 
 # Design export screenshots are generated, never committed
 design-export/screens/
+extension/dist/

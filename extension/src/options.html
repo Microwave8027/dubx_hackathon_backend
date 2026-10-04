@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Command Center Tab Sync: Settings</title>
+    <link rel="stylesheet" href="ui.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Command Center Tab Sync</h1>
+
+      <section class="card consent" aria-labelledby="consent-title">
+        <h2 id="consent-title" style="font-size: 15px; margin: 0 0 6px">Before you start</h2>
+        <p style="margin: 0 0 8px">
+          When you save your config in Command Center, this extension reads the
+          <strong>URL and title of every open tab</strong> in this browser (all windows, not
+          incognito) and sends them to your Command Center account. Tabs for chrome://, extension
+          pages, about: and local files are skipped. You can stop at any time by removing the token
+          below or uninstalling the extension.
+        </p>
+        <label style="display: flex; gap: 8px; align-items: flex-start; font-weight: 400">
+          <input id="consent" type="checkbox" style="margin-top: 3px" />
+          <span>I understand that my tab URLs and titles will be sent to my account.</span>
+        </label>
+      </section>
+
+      <section class="card" aria-labelledby="conn-title">
+        <h2 id="conn-title" style="font-size: 15px; margin: 0">Connection</h2>
+        <label for="api">API base URL</label>
+        <input id="api" type="url" placeholder="https://app.example.com" autocomplete="off" />
+        <label for="token">Token</label>
+        <input
+          id="token"
+          type="password"
+          placeholder="Paste the token from the app"
+          autocomplete="off"
+        />
+        <label for="device">This device's name</label>
+        <input id="device" type="text" autocomplete="off" />
+        <div class="row">
+          <button id="save" type="button">Save</button>
+          <button id="test" type="button" class="secondary">Test connection</button>
+          <button id="disconnect" type="button" class="secondary">Remove token</button>
+        </div>
+        <p id="msg" role="status" aria-live="polite" class="muted" style="margin: 10px 0 0"></p>
+      </section>
+
+      <section class="card" aria-labelledby="status-title">
+        <h2 id="status-title" style="font-size: 15px; margin: 0 0 6px">Last sync</h2>
+        <p id="status" class="muted" style="margin: 0">No sync yet.</p>
+        <p id="device-id" class="muted" style="margin: 6px 0 0; font-size: 12px"></p>
+      </section>
+    </main>
+    <script src="options.js"></script>
+  </body>
+</html>

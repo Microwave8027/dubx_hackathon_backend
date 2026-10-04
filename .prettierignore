@@ -5,3 +5,4 @@ src-tauri
 README.md
 design-export/DESIGN.md
 design-export/screens
+extension/dist
