@@ -6,6 +6,7 @@ const titles: [prefix: string, title: string][] = [
   ['/approvals', 'Approvals'],
   ['/layers/', 'Layer'],
   ['/calendar', 'Calendar'],
+  ['/assistant', 'Assistant'],
   ['/briefing', 'Briefing'],
   ['/log', 'Activity'],
   ['/settings', 'Settings'],

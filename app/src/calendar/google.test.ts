@@ -6,7 +6,9 @@ vi.mock('@/transport', () => ({ getTransport: () => ({ request }) as unknown as 
 
 import { disconnectGoogle, getGoogleStatus, isSafeAuthUrl, startGoogleConnect } from './google';
 
-beforeEach(() => request.mockReset());
+beforeEach(() => {
+  request.mockReset();
+});
 
 describe('google link client', () => {
   it('reads the connection status', async () => {

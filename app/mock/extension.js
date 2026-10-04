@@ -116,7 +116,12 @@ export function createExtensionApi({ extensionId = DEFAULT_EXTENSION_ID } = {}) 
   // ---- token management: used by the signed-in web app, not by the extension -----------------
   // (The real backend authenticates these with the user's session; the mock has no sessions.)
   router.use('/api/extension/tokens', (req, res, next) => {
-    res.set('Access-Control-Allow-Origin', '*');
+    const origin = req.get('Origin');
+    res.set('Access-Control-Allow-Origin', origin ?? '*');
+    if (origin) {
+      res.set('Vary', 'Origin');
+      res.set('Access-Control-Allow-Credentials', 'true');
+    }
     res.set('Access-Control-Allow-Headers', 'Content-Type');
     res.set('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
     if (req.method === 'OPTIONS') return res.sendStatus(204);
