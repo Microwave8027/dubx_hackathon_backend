@@ -1,0 +1,43 @@
+{
+  "timezone": "Not/AZone",
+  "fetchedAt": "2026-10-03T18:00:00Z",
+  "events": [
+    {
+      "id": "ok1",
+      "title": "Fine event",
+      "start": "2026-10-03T16:00:00Z",
+      "end": "2026-10-03T17:00:00Z"
+    },
+    {
+      "id": "gone",
+      "title": "Cancelled one",
+      "start": "2026-10-03T18:00:00Z",
+      "end": "2026-10-03T19:00:00Z",
+      "status": "cancelled"
+    },
+    {
+      "id": "bad1",
+      "title": "End before start",
+      "start": "2026-10-03T20:00:00Z",
+      "end": "2026-10-03T19:00:00Z"
+    },
+    { "id": "bad2", "title": "Garbage time", "start": "next tuesday-ish", "end": "later" },
+    { "id": "bad3", "title": "Missing start" },
+    { "id": "bad4", "title": "Impossible date", "start": "2026-02-31" },
+    "not even an object",
+    null,
+    {
+      "id": "ok2",
+      "summary": "Aliased and tentative",
+      "startTime": "2026-10-04T09:00:00Z",
+      "status": "tentative",
+      "unknownField": { "x": 1 }
+    },
+    {
+      "id": "ok1",
+      "title": "Duplicate id of a fine event",
+      "start": "2026-10-03T22:00:00Z",
+      "end": "2026-10-03T23:00:00Z"
+    }
+  ]
+}

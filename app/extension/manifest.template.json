@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "Command Center Tab Sync",
+  "version": "0.1.0",
+  "description": "When you save your config in Command Center, this browser sends its open tabs to your account.",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAylidlaPP3uO0dBF2n9QxquB+h7Y3h3el2rAHx8FhHdZ2xTAgBWJQpYXw7W+EVYg//f7Ezyviz9z2mM3btq/L+8+VJuU9iOicimpNY65ZCJvnw3Rx8MK4fzBW3SIT4NBgUsLqjf3JDkyeCJRdrmL0WfkXxhjqQ/vfF7f5ODhb4foipC7zZ4+O5KUheFfxXl7jTU9+dR66OEiYVFm/G7M0tYKWq92gl2NXyElUb5S/IdIecpiLfDEhCVPU9jQvGb+2jv1wuJgObAeppoygWRSHCmwKbXdyR9boXob2Onoj2hBctgQYoHPAn7rNyD/63+RTHkhSjPHEUUoxa+BekziD3QIDAQAB",
+  "minimum_chrome_version": "120",
+  "permissions": ["tabs", "storage", "alarms"],
+  "host_permissions": ["__APP_ORIGIN__/*"],
+  "background": { "service_worker": "background.js" },
+  "action": { "default_title": "Command Center Tab Sync", "default_popup": "popup.html" },
+  "options_ui": { "page": "options.html", "open_in_tab": true },
+  "externally_connectable": { "matches": ["__APP_ORIGIN__/*"] },
+  "incognito": "not_allowed"
+}

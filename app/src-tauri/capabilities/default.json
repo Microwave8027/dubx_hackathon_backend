@@ -1,0 +1,16 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Minimum capabilities: window, tray and notifications",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "core:tray:default",
+    "core:window:allow-show",
+    "core:window:allow-hide",
+    "core:window:allow-unminimize",
+    "core:window:allow-set-focus",
+    "core:window:allow-destroy",
+    "notification:default"
+  ]
+}

@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Command Center Tab Sync</title>
+    <link rel="stylesheet" href="ui.css" />
+    <style>
+      body {
+        width: 300px;
+      }
+      main {
+        padding: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1 style="font-size: 15px">Tab Sync</h1>
+      <p id="state" role="status" aria-live="polite" style="margin: 0 0 4px; font-weight: 600"></p>
+      <p id="detail" class="muted" style="margin: 0 0 4px"></p>
+      <p id="last" class="muted" style="margin: 0"></p>
+      <div class="row">
+        <button id="sync" type="button">Sync now</button>
+        <button id="settings" type="button" class="secondary">Settings</button>
+      </div>
+    </main>
+    <script src="popup.js"></script>
+  </body>
+</html>

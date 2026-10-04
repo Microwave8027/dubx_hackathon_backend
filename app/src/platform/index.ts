@@ -1,0 +1,24 @@
+import { createBrowserPlatform } from './browser';
+import { createTauriPlatform } from './tauri';
+import type { Platform } from './types';
+
+export type { NotifyOptions, Platform, TrayState, WidgetSupport, WidgetTarget } from './types';
+export { invokeCommand } from './invoke';
+export { onPlatformEvent, emitPlatformEvent, type PlatformEvent } from './events';
+
+export function detectTauri(): boolean {
+  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+}
+
+let current: Platform | null = null;
+
+/** The runtime is detected once; every component goes through this adapter. */
+export function getPlatform(): Platform {
+  current ??= detectTauri() ? createTauriPlatform() : createBrowserPlatform();
+  return current;
+}
+
+/** Test seam. */
+export function setPlatformForTests(platform: Platform | null): void {
+  current = platform;
+}
