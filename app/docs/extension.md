@@ -25,7 +25,7 @@ profiles, and the API contract the backend has to implement.
 ## Build and install (Chrome 120+)
 
 ```bash
-cd dubx-app
+cd app
 pnpm install
 pnpm ext:build                     # -> extension/dist, for http://localhost:1420
 # For a deployed app, trust that origin instead:
@@ -33,7 +33,7 @@ APP_ORIGIN=https://app.example.com pnpm ext:build
 ```
 
 1. Open `chrome://extensions`, turn on **Developer mode**.
-2. **Load unpacked** and choose `dubx-app/extension/dist`.
+2. **Load unpacked** and choose `app/extension/dist`.
 3. The extension opens its Settings page with a consent note. Incognito access stays off (the
    manifest sets `"incognito": "not_allowed"`, and incognito tabs are skipped anyway).
 

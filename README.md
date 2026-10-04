@@ -1,9 +1,11 @@
 # dubx_backend
 
 Express + MongoDB backend with Google OAuth. Users log in with Google, and Gemini builds a
-personalized schedule from a POST body and creates it in their Google Calendar. It also backs the
-[desktop app](desktop/README.md): every calendar block gets a group of saved windows, and a
-scheduler tells the app when blocks are coming up or starting.
+personalized schedule from a POST body and creates it in their Google Calendar. The UI lives in
+[`app/`](app/) (Tauri 2 + React, also an installable PWA). The block and configuration routes
+(every calendar block gets a group of saved windows, and a scheduler tells the client when blocks
+are coming up or starting) were built for a window-capturing desktop client that has since been
+removed from this repo; the routes remain.
 
 ## Setup
 

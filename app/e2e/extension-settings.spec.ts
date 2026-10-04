@@ -45,6 +45,9 @@ test.describe('Settings: Connect extension', () => {
       .getByRole('button', { name: 'Generate token' })
       .click();
     await expect(app.getByLabel('Extension token')).toBeVisible();
+    // Let images and fonts settle so axe measures the final colours.
+    await app.waitForLoadState('networkidle');
+    await app.evaluate(() => document.fonts.ready);
     const results = await new AxeBuilder({ page: app })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
       .analyze();
