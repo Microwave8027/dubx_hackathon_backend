@@ -1,0 +1,29 @@
+{
+  "timezone": "America/New_York",
+  "fetchedAt": 1791050400,
+  "events": [
+    {
+      "id": "g1",
+      "summary": "Chemistry lab",
+      "start": { "dateTime": "2026-10-03T10:00:00-04:00", "timeZone": "America/New_York" },
+      "end": { "dateTime": "2026-10-03T11:30:00-04:00", "timeZone": "America/New_York" },
+      "calendar_name": "School",
+      "status": "confirmed"
+    },
+    {
+      "id": "g2",
+      "summary": "Study group (Los Angeles wall clock)",
+      "start": { "dateTime": "2026-10-03T13:00:00", "timeZone": "America/Los_Angeles" },
+      "end": { "dateTime": "2026-10-03T14:00:00", "timeZone": "America/Los_Angeles" },
+      "calendarName": "Friends"
+    },
+    {
+      "id": "g3",
+      "summary": "Fall break",
+      "start": { "date": "2026-10-12" },
+      "end": { "date": "2026-10-14" },
+      "all_day": true,
+      "calendar": "School"
+    }
+  ]
+}

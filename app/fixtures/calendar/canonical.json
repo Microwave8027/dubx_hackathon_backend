@@ -1,0 +1,35 @@
+{
+  "timezone": "America/Los_Angeles",
+  "fetchedAt": "2026-10-03T18:00:00Z",
+  "events": [
+    {
+      "id": "evt_1",
+      "title": "Math homework",
+      "start": "2026-10-03T15:00:00-07:00",
+      "end": "2026-10-03T16:15:00-07:00",
+      "allDay": false,
+      "calendar": "School",
+      "color": "#4285f4",
+      "location": null,
+      "description": null,
+      "status": "confirmed"
+    },
+    {
+      "id": "evt_2",
+      "title": "English homework",
+      "start": "2026-10-03T17:00:00-07:00",
+      "end": "2026-10-03T18:00:00-07:00",
+      "calendar": "School",
+      "description": "Essay draft https://docs.google.com/document/d/example",
+      "status": "tentative"
+    },
+    {
+      "id": "evt_3",
+      "title": "Spirit Week",
+      "start": "2026-10-05",
+      "end": "2026-10-06",
+      "allDay": true,
+      "calendar": "School"
+    }
+  ]
+}

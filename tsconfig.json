@@ -27,6 +27,6 @@
     "noUnusedParameters": false,
     "noPropertyAccessFromIndexSignature": false
   },
-  // The desktop app and example UI have their own toolchains.
-  "exclude": ["node_modules", "desktop", "example_ui"]
+  // The UI in app/ has its own toolchain (pnpm, Vite, Tauri).
+  "exclude": ["node_modules", "app"]
 }

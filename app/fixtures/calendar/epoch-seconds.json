@@ -1,0 +1,6 @@
+{
+  "events": [
+    { "id": "s1", "title": "Seconds", "startTime": 1791050400, "endTime": 1791054000 },
+    { "id": "s2", "title": "Milliseconds", "start_time": 1791054000000, "end_time": 1791057600000 }
+  ]
+}
