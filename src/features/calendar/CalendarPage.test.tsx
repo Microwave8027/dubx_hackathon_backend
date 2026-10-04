@@ -118,6 +118,36 @@ describe('CalendarPage: linking', () => {
     expect(screen.queryByRole('button', { name: 'Disconnect' })).not.toBeInTheDocument();
   });
 
+  it('offers to connect when the agent has neither the status endpoint nor any events', async () => {
+    google.getGoogleStatus.mockRejectedValue(new Error('404'));
+    setCalendarSourceForTests({
+      load: () => Promise.reject(new Error('down')),
+      subscribe: () => () => {},
+    });
+    renderWithProviders(<CalendarPage />);
+    expect(
+      await screen.findByRole('button', { name: 'Connect Google Calendar' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/could not be loaded from the agent/i)).toBeInTheDocument();
+  });
+
+  it('keeps a Connect button next to the calendar when status is unreadable but events load', async () => {
+    google.getGoogleStatus.mockRejectedValue(new Error('404'));
+    useDataset([event('a', 'Standup', 30, 15)]);
+    renderWithProviders(<CalendarPage />);
+    await screen.findByRole('article', { name: 'Standup' });
+    expect(screen.getByRole('button', { name: 'Connect Google Calendar' })).toBeInTheDocument();
+  });
+
+  it('explains when the agent has no sign-in endpoint yet', async () => {
+    const { ApiError } = await import('@/transport/errors');
+    google.getGoogleStatus.mockResolvedValue({ connected: false });
+    google.startGoogleConnect.mockRejectedValue(new ApiError('nope', 404));
+    renderWithProviders(<CalendarPage />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Connect Google Calendar' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(/cannot link google calendar yet/i);
+  });
+
   it('disconnects after confirmation', async () => {
     google.disconnectGoogle.mockResolvedValue({});
     renderWithProviders(<CalendarPage />);

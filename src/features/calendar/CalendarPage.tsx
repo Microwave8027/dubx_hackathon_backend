@@ -37,8 +37,10 @@ export function CalendarPage() {
   const [view, setView] = useState<View>('week');
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
   const [confirming, setConfirming] = useState(false);
-  const showCalendar = link.state === 'connected' || link.state === 'unknown';
   const query = useCalendar();
+  // Status unreadable and no events either: the agent has nothing for us, so offer to link.
+  const unreachable = link.state === 'unknown' && Boolean(query.error) && !query.data;
+  const showCalendar = link.state === 'connected' || (link.state === 'unknown' && !unreachable);
   const events = useMemo(() => query.data?.events ?? [], [query.data]);
 
   const days = useMemo(
@@ -58,6 +60,11 @@ export function CalendarPage() {
         <h1 id="calendar-title" className="text-xl font-semibold">
           Calendar
         </h1>
+        {link.state === 'unknown' && !unreachable && (
+          <button type="button" onClick={link.connect} disabled={link.connecting} className={btn}>
+            {link.connecting ? 'Opening Google…' : 'Connect Google Calendar'}
+          </button>
+        )}
         {link.state === 'connected' && (
           <div className="flex items-center gap-3 text-sm">
             <span className="text-muted">
@@ -78,7 +85,7 @@ export function CalendarPage() {
         />
       )}
 
-      {link.state === 'disconnected' && (
+      {(link.state === 'disconnected' || unreachable) && (
         <ConnectCard
           onConnect={link.connect}
           connecting={link.connecting}
@@ -86,6 +93,7 @@ export function CalendarPage() {
           onCancel={link.cancelWaiting}
           onRecheck={link.recheck}
           error={link.error}
+          note={unreachable ? 'Events could not be loaded from the agent either.' : undefined}
         />
       )}
 

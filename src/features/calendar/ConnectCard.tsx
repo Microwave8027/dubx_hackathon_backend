@@ -5,6 +5,7 @@ export function ConnectCard({
   onCancel,
   onRecheck,
   error,
+  note,
 }: {
   onConnect(): void;
   connecting: boolean;
@@ -12,6 +13,8 @@ export function ConnectCard({
   onCancel(): void;
   onRecheck(): void;
   error: string | null;
+  /** Extra context shown under the explanation, e.g. why no events are visible. */
+  note?: string;
 }) {
   return (
     <section
@@ -25,6 +28,7 @@ export function ConnectCard({
         See your events here and let the agent plan around them. You sign in with Google in your
         browser; this app never sees your Google password or tokens.
       </p>
+      {note && <p className="mt-2 text-sm text-muted">{note}</p>}
       {waiting ? (
         <div role="status" className="mt-5 space-y-3">
           <p className="text-sm">Waiting for you to finish signing in with Google…</p>

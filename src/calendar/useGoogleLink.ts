@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getPlatform } from '@/platform';
+import { ApiError } from '@/transport/errors';
 import { CALENDAR_KEY } from './useCalendar';
 import {
   disconnectGoogle,
@@ -56,6 +57,7 @@ export function useGoogleLink() {
     onSuccess: async (result) => {
       if (result.connected) {
         await queryClient.invalidateQueries({ queryKey: GOOGLE_KEY });
+        await queryClient.invalidateQueries({ queryKey: CALENDAR_KEY });
         return;
       }
       if (!result.authUrl || !isSafeAuthUrl(result.authUrl)) {
@@ -71,7 +73,12 @@ export function useGoogleLink() {
         );
       }, WAIT_LIMIT_MS);
     },
-    onError: () => setError('Could not reach the agent to start Google sign-in.'),
+    onError: (e) =>
+      setError(
+        e instanceof ApiError && (e.status === 404 || e.status === 405 || e.status === 501)
+          ? 'The agent cannot link Google Calendar yet (it has no sign-in endpoint). Try again once it is updated.'
+          : 'Could not reach the agent to start Google sign-in. Check the connection settings.',
+      ),
   });
 
   const disconnect = useMutation({

@@ -52,6 +52,21 @@ test.describe('google calendar', () => {
     await expect(app.getByRole('button', { name: 'Connect Google Calendar' })).toBeVisible();
   });
 
+  test('with an agent that has no link or schedule endpoints, Connect is still offered', async ({
+    app,
+    allowConsole,
+  }) => {
+    // Expected failures: every calendar request 404s, so the browser logs them.
+    allowConsole.push(/404|Failed to load resource|CORS/i);
+    await app.route(/localhost:8787\/(integrations|schedule)/, (r) =>
+      r.fulfill({ status: 404, headers: { 'access-control-allow-origin': '*' }, body: '{}' }),
+    );
+    await app.goto('/calendar');
+    await expect(app.getByRole('button', { name: 'Connect Google Calendar' })).toBeVisible();
+    await app.getByRole('button', { name: 'Connect Google Calendar' }).click();
+    await expect(app.getByRole('alert')).toContainText(/cannot link Google Calendar yet/i);
+  });
+
   for (const state of ['not connected', 'connected'] as const) {
     test(`no accessibility violations (${state})`, async ({ app }) => {
       await app.emulateMedia({ reducedMotion: 'reduce' });
